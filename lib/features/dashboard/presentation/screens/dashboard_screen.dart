@@ -1,0 +1,201 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../controllers/dashboard_controller.dart';
+import '../../domain/entities/dashboard_summary.dart';
+
+class DashboardScreen extends ConsumerWidget {
+  const DashboardScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final summaryAsync = ref.watch(dashboardSummaryProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+      ),
+      body: summaryAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('Error: $err', textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.refresh(dashboardSummaryProvider),
+                child: const Text('Retry'),
+              )
+            ],
+          ),
+        ),
+        data: (summary) => _buildDashboard(context, summary),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          // Action for New Invoice
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('New Invoice'),
+      ),
+    );
+  }
+
+  Widget _buildDashboard(BuildContext context, DashboardSummary summary) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        // ignore: unused_result
+        ref.refresh(dashboardSummaryProvider);
+      },
+      child: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricCard(
+                  context,
+                  'Today\'s Sales',
+                  '\$${summary.todaysSales.toStringAsFixed(2)}',
+                  Icons.attach_money,
+                  Colors.green,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildMetricCard(
+                  context,
+                  'Today\'s Invoices',
+                  '${summary.todaysInvoiceCount}',
+                  Icons.receipt,
+                  Colors.blue,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricCard(
+                  context,
+                  'Customers',
+                  '${summary.totalCustomers}',
+                  Icons.people,
+                  Colors.orange,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildMetricCard(
+                  context,
+                  'Products',
+                  '${summary.totalProducts}',
+                  Icons.inventory_2,
+                  Colors.purple,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Recent Invoices',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              TextButton(
+                onPressed: () {},
+                child: const Text('See All'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (summary.recentInvoices.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Center(child: Text('No recent invoices found.')),
+            )
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: summary.recentInvoices.length,
+              itemBuilder: (context, index) {
+                final invoice = summary.recentInvoices[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    leading: const CircleAvatar(
+                      child: Icon(Icons.receipt_long),
+                    ),
+                    title: Text(invoice.customerName),
+                    subtitle: Text('Invoice #${invoice.id} • ${invoice.createdAt}'),
+                    trailing: Text(
+                      '\$${invoice.totalAmount.toStringAsFixed(2)}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricCard(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: () {
+          if (title == 'Customers') {
+            context.push('/customers');
+          }
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, color: color, size: 28),
+                  const Spacer(),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
