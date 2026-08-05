@@ -18,7 +18,7 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
 
   @override
   Future<PaginatedCustomersModel> getCustomers(int page, String? search) async {
-    final queryParameters = {'page': page};
+    final Map<String, dynamic> queryParameters = {'page': page};
     if (search != null && search.isNotEmpty) {
       queryParameters['search'] = search;
     }

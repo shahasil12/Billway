@@ -32,7 +32,7 @@ class DashboardScreen extends ConsumerWidget {
             ],
           ),
         ),
-        data: (summary) => _buildDashboard(context, summary),
+        data: (summary) => _buildDashboard(context, ref, summary),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
@@ -44,7 +44,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDashboard(BuildContext context, DashboardSummary summary) {
+  Widget _buildDashboard(BuildContext context, WidgetRef ref, DashboardSummary summary) {
     return RefreshIndicator(
       onRefresh: () async {
         // ignore: unused_result
