@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers.dart';
 
@@ -27,7 +28,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         _usernameController.text,
         _passwordController.text,
       );
-      if (!success && mounted) {
+      if (success && mounted) {
+        context.go('/');
+      } else if (!success && mounted) {
         final error = ref.read(authStateProvider).error;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(error?.toString() ?? 'Login failed')),

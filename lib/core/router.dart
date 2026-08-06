@@ -31,12 +31,11 @@ import '../features/reports/presentation/screens/reports_screen.dart';
 import '../features/settings/presentation/screens/settings_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
-
   return GoRouter(
     initialLocation: '/login',
     redirect: (context, state) {
       final isLoggingIn = state.uri.path == '/login';
+      final authState = ref.read(authStateProvider);
       
       if (authState.isLoading) {
         return null;
