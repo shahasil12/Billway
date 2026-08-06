@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/providers.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../controllers/invoice_list_controller.dart';
 import 'dart:async';
 
@@ -46,6 +48,7 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(invoiceListProvider);
+    final currency = ref.watch(settingsProvider).settings?.currency ?? '\$';
 
     ref.listen<InvoiceListState>(invoiceListProvider, (previous, next) {
       if (next.error != null && next.error != previous?.error) {
@@ -110,7 +113,7 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text('\$${invoice.grandTotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text('$currency${invoice.grandTotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                             Text(invoice.status, style: TextStyle(color: invoice.status == 'PAID' ? Colors.green : Colors.orange, fontSize: 12)),
                           ],
                         ),

@@ -28,6 +28,8 @@ import '../features/payments/presentation/screens/payment_list_screen.dart';
 
 import '../features/reports/presentation/screens/reports_screen.dart';
 
+import '../features/settings/presentation/screens/settings_screen.dart';
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
 
@@ -142,6 +144,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/reports',
         builder: (context, state) => const ReportsScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
       ),
     ],
   );

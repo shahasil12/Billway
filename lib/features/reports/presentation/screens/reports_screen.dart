@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../controllers/report_controller.dart';
 import '../../domain/entities/report.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 
 class ReportsScreen extends ConsumerWidget {
   const ReportsScreen({super.key});
@@ -10,6 +11,7 @@ class ReportsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(reportProvider);
+    final currency = ref.watch(settingsProvider).settings?.currency ?? '\$';
 
     return Scaffold(
       appBar: AppBar(
@@ -44,7 +46,7 @@ class ReportsScreen extends ConsumerWidget {
                           children: [
                             Text(state.dateRangeLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
                             const SizedBox(height: 16),
-                            _buildSummaryCards(state.report!.summary),
+                            _buildSummaryCards(state.report!.summary, currency),
                             const SizedBox(height: 32),
                             const Text('Sales Trend', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 16),
@@ -52,11 +54,11 @@ class ReportsScreen extends ConsumerWidget {
                             const SizedBox(height: 32),
                             const Text('Top Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 16),
-                            _buildTopProducts(state.report!.topProducts),
+                            _buildTopProducts(state.report!.topProducts, currency),
                             const SizedBox(height: 32),
                             const Text('Recent Invoices', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 16),
-                            _buildRecentInvoices(state.report!.recentInvoices),
+                            _buildRecentInvoices(state.report!.recentInvoices, currency),
                           ],
                         ),
                       ),
@@ -64,16 +66,16 @@ class ReportsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSummaryCards(ReportSummary summary) {
+  Widget _buildSummaryCards(ReportSummary summary, String currency) {
     return Column(
       children: [
-        _buildMetricCard('Total Sales', '\$${summary.totalSales.toStringAsFixed(2)}', Icons.point_of_sale, Colors.blue),
+        _buildMetricCard('Total Sales', '$currency${summary.totalSales.toStringAsFixed(2)}', Icons.point_of_sale, Colors.blue),
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: _buildMetricCard('Collected', '\$${summary.totalCollected.toStringAsFixed(2)}', Icons.check_circle, Colors.green)),
+            Expanded(child: _buildMetricCard('Collected', '$currency${summary.totalCollected.toStringAsFixed(2)}', Icons.check_circle, Colors.green)),
             const SizedBox(width: 16),
-            Expanded(child: _buildMetricCard('Pending', '\$${summary.totalPending.toStringAsFixed(2)}', Icons.pending_actions, Colors.orange)),
+            Expanded(child: _buildMetricCard('Pending', '$currency${summary.totalPending.toStringAsFixed(2)}', Icons.pending_actions, Colors.orange)),
           ],
         ),
       ],
@@ -159,7 +161,7 @@ class ReportsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTopProducts(List<TopProduct> products) {
+  Widget _buildTopProducts(List<TopProduct> products, String currency) {
     if (products.isEmpty) {
       return const Center(child: Text('No products sold'));
     }
@@ -176,14 +178,14 @@ class ReportsScreen extends ConsumerWidget {
             leading: CircleAvatar(child: Text('${index + 1}')),
             title: Text(p.productName),
             subtitle: Text('Sold: ${p.quantitySold}'),
-            trailing: Text('\$${p.revenue.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+            trailing: Text('$currency${p.revenue.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
           );
         },
       ),
     );
   }
 
-  Widget _buildRecentInvoices(List invoices) {
+  Widget _buildRecentInvoices(List invoices, String currency) {
     if (invoices.isEmpty) {
       return const Center(child: Text('No recent invoices'));
     }
@@ -199,7 +201,7 @@ class ReportsScreen extends ConsumerWidget {
           return ListTile(
             title: Text(inv.customer?.name ?? 'Unknown'),
             subtitle: Text('Invoice #${inv.id}'),
-            trailing: Text('\$${inv.grandTotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            trailing: Text('$currency${inv.grandTotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
           );
         },
       ),

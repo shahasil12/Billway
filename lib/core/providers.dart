@@ -29,6 +29,9 @@ import '../features/payments/domain/repositories/payment_repository.dart';
 import '../features/reports/data/datasources/report_remote_data_source.dart';
 import '../features/reports/data/repositories/report_repository_impl.dart';
 import '../features/reports/domain/repositories/report_repository.dart';
+import '../features/settings/data/datasources/settings_remote_data_source.dart';
+import '../features/settings/data/repositories/settings_repository_impl.dart';
+import '../features/settings/domain/repositories/settings_repository.dart';
 
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
   return const FlutterSecureStorage();
@@ -126,4 +129,13 @@ final reportRemoteDataSourceProvider = Provider<ReportRemoteDataSource>((ref) {
 
 final reportRepositoryProvider = Provider<ReportRepository>((ref) {
   return ReportRepositoryImpl(ref.read(reportRemoteDataSourceProvider));
+});
+
+// Settings Providers
+final settingsRemoteDataSourceProvider = Provider<SettingsRemoteDataSource>((ref) {
+  return SettingsRemoteDataSourceImpl(ref.read(apiClientProvider));
+});
+
+final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
+  return SettingsRepositoryImpl(ref.read(settingsRemoteDataSourceProvider));
 });

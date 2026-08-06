@@ -7,9 +7,13 @@ import 'dart:io';
 import '../../domain/entities/invoice.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/providers.dart';
-import '../../payments/domain/entities/payment.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
+import '../../../payments/domain/entities/payment.dart';
 import '../controllers/invoice_list_controller.dart';
+import '../../../payments/presentation/controllers/payment_list_controller.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/printing/pdf_invoice_generator.dart';
+import '../widgets/thermal_printer_dialog.dart';
 
 class InvoiceDetailScreen extends ConsumerStatefulWidget {
   final Invoice invoice;
@@ -83,16 +87,60 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
     }
   }
 
+  void _showPrintOptionsSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.picture_as_pdf),
+                title: const Text('Print A4 (PDF)'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final settings = ref.read(settingsProvider).settings;
+                  if (settings != null) {
+                    await PdfInvoiceGenerator.printInvoice(_invoice, settings);
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.receipt),
+                title: const Text('Print Thermal Receipt'),
+                onTap: () {
+                  Navigator.pop(context);
+                  showDialog(
+                    context: context,
+                    builder: (context) => ThermalPrinterDialog(invoice: _invoice),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final currency = ref.watch(settingsProvider).settings?.currency ?? '\$';
+    
     return Scaffold(
       appBar: AppBar(
         title: Text('Invoice #${_invoice.id}'),
         actions: [
           IconButton(
-            icon: _isDownloading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.picture_as_pdf),
+            icon: const Icon(Icons.print),
+            onPressed: _showPrintOptionsSheet,
+            tooltip: 'Print',
+          ),
+          IconButton(
+            icon: _isDownloading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.download),
             onPressed: _isDownloading ? null : _downloadAndOpenPdf,
-            tooltip: 'View PDF',
+            tooltip: 'Download PDF',
           ),
         ],
       ),
@@ -140,8 +188,8 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
                   final item = _invoice.items[index];
                   return ListTile(
                     title: Text(item.productName ?? 'Product'),
-                    subtitle: Text('${item.quantity} x \$${item.unitPrice?.toStringAsFixed(2) ?? '0.00'} (Tax: ${item.taxPercentage}%)'),
-                    trailing: Text('\$${item.lineTotal?.toStringAsFixed(2) ?? '0.00'}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text('${item.quantity} x $currency${item.unitPrice?.toStringAsFixed(2) ?? '0.00'} (Tax: ${item.taxPercentage}%)'),
+                    trailing: Text('$currency${item.lineTotal?.toStringAsFixed(2) ?? '0.00'}', style: const TextStyle(fontWeight: FontWeight.bold)),
                   );
                 },
               ),
@@ -154,15 +202,15 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    _buildTotalRow('Subtotal', _invoice.subtotal),
+                    _buildTotalRow('Subtotal', _invoice.subtotal, currency: currency),
                     if (_invoice.discountAmount > 0)
-                      _buildTotalRow('Discount (${_invoice.discountPercentage}%)', -_invoice.discountAmount, color: Colors.red),
-                    _buildTotalRow('Tax', _invoice.taxTotal),
+                      _buildTotalRow('Discount (${_invoice.discountPercentage}%)', -_invoice.discountAmount, color: Colors.red, currency: currency),
+                    _buildTotalRow('Tax', _invoice.taxTotal, currency: currency),
                     const Divider(),
-                    _buildTotalRow('Grand Total', _invoice.grandTotal, isBold: true, size: 20),
+                    _buildTotalRow('Grand Total', _invoice.grandTotal, isBold: true, size: 20, currency: currency),
                     const Divider(),
-                    _buildTotalRow('Amount Paid', _invoice.amountPaid, color: Colors.green),
-                    _buildTotalRow('Balance Due', _invoice.balanceDue, isBold: true, size: 20, color: _invoice.balanceDue > 0 ? Colors.red : Colors.green),
+                    _buildTotalRow('Amount Paid', _invoice.amountPaid, color: Colors.green, currency: currency),
+                    _buildTotalRow('Balance Due', _invoice.balanceDue, isBold: true, size: 20, color: _invoice.balanceDue > 0 ? Colors.red : Colors.green, currency: currency),
                   ],
                 ),
               ),
@@ -214,14 +262,14 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
     );
   }
 
-  Widget _buildTotalRow(String label, double amount, {bool isBold = false, double size = 16, Color? color}) {
+  Widget _buildTotalRow(String label, double amount, {bool isBold = false, double size = 16, Color color = Colors.black, String currency = '\$'}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: TextStyle(fontSize: size, fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
-          Text('\$${amount.toStringAsFixed(2)}', style: TextStyle(fontSize: size, fontWeight: isBold ? FontWeight.bold : FontWeight.normal, color: color)),
+          Text('$currency${amount.toStringAsFixed(2)}', style: TextStyle(fontSize: size, fontWeight: isBold ? FontWeight.bold : FontWeight.normal, color: color)),
         ],
       ),
     );
@@ -290,6 +338,8 @@ class _RecordPaymentBottomSheetState extends ConsumerState<_RecordPaymentBottomS
 
   @override
   Widget build(BuildContext context) {
+    final currency = ref.watch(settingsProvider).settings?.currency ?? '\$';
+
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -302,7 +352,7 @@ class _RecordPaymentBottomSheetState extends ConsumerState<_RecordPaymentBottomS
           const SizedBox(height: 16),
           TextFormField(
             controller: _amountController,
-            decoration: const InputDecoration(labelText: 'Amount', border: OutlineInputBorder(), prefixText: '\$'),
+            decoration: InputDecoration(labelText: 'Amount', border: const OutlineInputBorder(), prefixText: currency),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
           const SizedBox(height: 16),

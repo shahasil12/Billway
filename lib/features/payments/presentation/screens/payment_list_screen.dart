@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../controllers/payment_list_controller.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/providers.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
+import '../controllers/payment_list_controller.dart';
 
 class PaymentListScreen extends ConsumerStatefulWidget {
   const PaymentListScreen({super.key});
@@ -34,6 +36,7 @@ class _PaymentListScreenState extends ConsumerState<PaymentListScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(paymentListProvider);
+    final currency = ref.watch(settingsProvider).settings?.currency ?? '\$';
 
     ref.listen<PaymentListState>(paymentListProvider, (previous, next) {
       if (next.error != null && next.error != previous?.error) {
@@ -77,9 +80,16 @@ class _PaymentListScreenState extends ConsumerState<PaymentListScreen> {
                         title: Text('Payment for Invoice #${payment.invoiceId}', style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text('$date\nMethod: ${payment.paymentMethod}${payment.referenceNumber != null ? ' (Ref: ${payment.referenceNumber})' : ''}'),
                         isThreeLine: true,
-                        trailing: Text(
-                          '\$${payment.amount.toStringAsFixed(2)}',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green),
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '$currency${payment.amount.toStringAsFixed(2)}',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green),
+                            ),
+                            Text(payment.paymentMethod, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                          ],
                         ),
                       );
                     },

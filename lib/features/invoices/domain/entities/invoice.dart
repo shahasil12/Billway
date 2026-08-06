@@ -1,6 +1,6 @@
-import '../../customers/domain/entities/customer.dart';
-import '../../products/domain/entities/product.dart';
-import '../../payments/domain/entities/payment.dart';
+import '../../../customers/domain/entities/customer.dart';
+import '../../../products/domain/entities/product.dart';
+import '../../../payments/domain/entities/payment.dart';
 
 class InvoiceItem {
   final int? id;

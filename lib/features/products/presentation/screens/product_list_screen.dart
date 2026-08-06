@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/providers.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../controllers/product_list_controller.dart';
-import '../../categories/presentation/controllers/category_list_controller.dart';
+import '../../../categories/presentation/controllers/category_list_controller.dart';
 import 'dart:async';
 
 class ProductListScreen extends ConsumerStatefulWidget {
@@ -47,6 +49,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(productListProvider);
+    final currency = ref.watch(settingsProvider).settings?.currency ?? '\$';
     final categoryState = ref.watch(categoryListProvider);
 
     ref.listen<ProductListState>(productListProvider, (previous, next) {
@@ -165,7 +168,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('\$${product.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)),
+                              Text('$currency${product.price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)),
                               IconButton(
                                 icon: const Icon(Icons.edit),
                                 onPressed: () => context.push('/products/edit', extra: product),

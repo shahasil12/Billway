@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:io';
+import '../../../categories/presentation/controllers/category_list_controller.dart';
+import '../controllers/product_list_controller.dart';
 import '../../domain/entities/product.dart';
 import '../../../../core/providers.dart';
 

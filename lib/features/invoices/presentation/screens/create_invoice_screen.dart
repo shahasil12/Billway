@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/entities/invoice.dart';
 import '../../../../core/providers.dart';
-import '../../customers/presentation/controllers/customer_list_controller.dart';
-import '../../products/presentation/controllers/product_list_controller.dart';
-import '../../customers/domain/entities/customer.dart';
-import '../../products/domain/entities/product.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
+import '../../../customers/presentation/controllers/customer_list_controller.dart';
+import '../../../products/presentation/controllers/product_list_controller.dart';
+import '../../../customers/domain/entities/customer.dart';
+import '../../../products/domain/entities/product.dart';
 import '../controllers/invoice_list_controller.dart';
 
 class CreateInvoiceScreen extends ConsumerStatefulWidget {
@@ -136,6 +137,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
   @override
   Widget build(BuildContext context) {
     final customers = ref.watch(customerListProvider).customers;
+    final currency = ref.watch(settingsProvider).settings?.currency ?? '\$';
 
     return Scaffold(
       appBar: AppBar(
@@ -175,7 +177,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                   ..._items.map((item) => ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(item.productName!),
-                    subtitle: Text('\$${item.unitPrice} x ${item.quantity} (Tax: ${item.taxPercentage}%)'),
+                    subtitle: Text('$currency${item.unitPrice} x ${item.quantity} (Tax: ${item.taxPercentage}%)'),
                     trailing: IconButton(
                       icon: const Icon(Icons.remove_circle, color: Colors.red),
                       onPressed: () {
@@ -227,7 +229,10 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text('Expected Total:', style: TextStyle(color: Colors.grey)),
-                      Text('\$${_calculatedGrandTotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue)),
+                      Text(
+                        '$currency${_calculatedGrandTotal.toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),

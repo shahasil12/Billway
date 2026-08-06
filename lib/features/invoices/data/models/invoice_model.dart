@@ -1,6 +1,6 @@
 import '../../domain/entities/invoice.dart';
-import '../../customers/data/models/customer_model.dart';
-import '../../payments/data/models/payment_model.dart';
+import '../../../customers/data/models/customer_model.dart';
+import '../../../payments/data/models/payment_model.dart';
 
 class InvoiceItemModel extends InvoiceItem {
   InvoiceItemModel({
@@ -49,8 +49,10 @@ class InvoiceModel extends Invoice {
     super.grandTotal,
     super.paymentMethod,
     super.status,
-    super.createdAt,
     required super.items,
+    super.amountPaid = 0,
+    super.balanceDue = 0,
+    super.payments = const [],
   });
 
   factory InvoiceModel.fromJson(Map<String, dynamic> json) {

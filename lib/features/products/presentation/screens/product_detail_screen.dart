@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../../../core/providers.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../domain/entities/product.dart';
 
-class ProductDetailScreen extends StatelessWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class ProductDetailScreen extends ConsumerWidget {
   final Product product;
   const ProductDetailScreen({super.key, required this.product});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currency = ref.watch(settingsProvider).settings?.currency ?? '\$';
     return Scaffold(
       appBar: AppBar(
         title: Text(product.name),
@@ -47,7 +52,7 @@ class ProductDetailScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '\$${product.price.toStringAsFixed(2)}',
+                        '$currency${product.price.toStringAsFixed(2)}',
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.green, fontWeight: FontWeight.bold),
                       ),
                     ],

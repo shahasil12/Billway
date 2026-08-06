@@ -1,4 +1,4 @@
-import '../../invoices/domain/entities/invoice.dart';
+import '../../../invoices/domain/entities/invoice.dart';
 
 class ReportSummary {
   final double totalSales;
