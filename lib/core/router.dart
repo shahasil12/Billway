@@ -14,6 +14,11 @@ import '../features/categories/presentation/screens/category_list_screen.dart';
 import '../features/categories/presentation/screens/add_edit_category_screen.dart';
 import '../features/categories/domain/entities/category.dart';
 
+import '../features/products/presentation/screens/product_list_screen.dart';
+import '../features/products/presentation/screens/product_detail_screen.dart';
+import '../features/products/presentation/screens/add_edit_product_screen.dart';
+import '../features/products/domain/entities/product.dart';
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
 
@@ -82,6 +87,28 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final category = state.extra as Category;
           return AddEditCategoryScreen(category: category);
+        },
+      ),
+      GoRoute(
+        path: '/products',
+        builder: (context, state) => const ProductListScreen(),
+      ),
+      GoRoute(
+        path: '/products/add',
+        builder: (context, state) => const AddEditProductScreen(),
+      ),
+      GoRoute(
+        path: '/products/edit',
+        builder: (context, state) {
+          final product = state.extra as Product;
+          return AddEditProductScreen(product: product);
+        },
+      ),
+      GoRoute(
+        path: '/products/:id',
+        builder: (context, state) {
+          final product = state.extra as Product;
+          return ProductDetailScreen(product: product);
         },
       ),
     ],

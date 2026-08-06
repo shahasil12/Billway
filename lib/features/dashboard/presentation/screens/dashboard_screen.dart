@@ -48,6 +48,14 @@ class DashboardScreen extends ConsumerWidget {
                 context.push('/categories');
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.inventory),
+              title: const Text('Products'),
+              onTap: () {
+                context.pop();
+                context.push('/products');
+              },
+            ),
           ],
         ),
       ),
@@ -132,6 +140,7 @@ class DashboardScreen extends ConsumerWidget {
                   '${summary.totalProducts}',
                   Icons.inventory_2,
                   Colors.purple,
+                  onTap: () => context.push('/products'),
                 ),
               ),
             ],
