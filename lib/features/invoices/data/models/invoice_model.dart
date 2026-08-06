@@ -49,6 +49,7 @@ class InvoiceModel extends Invoice {
     super.grandTotal,
     super.paymentMethod,
     super.status,
+    super.createdAt,
     required super.items,
     super.amountPaid = 0,
     super.balanceDue = 0,

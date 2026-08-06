@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/providers.dart';
 import '../../../dashboard/presentation/screens/dashboard_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -9,24 +7,6 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authStateProvider).value;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Billway Home'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await ref.read(authStateProvider.notifier).logout();
-              if (context.mounted) {
-                context.go('/login');
-              }
-            },
-          ),
-        ],
-      ),
-      body: const DashboardScreen(),
-    );
+    return const DashboardScreen();
   }
 }

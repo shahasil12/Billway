@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/providers.dart';
 import '../../../reports/presentation/controllers/report_controller.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../controllers/dashboard_controller.dart';
-import 'package:go_router/go_router.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -16,347 +17,677 @@ class DashboardScreen extends ConsumerWidget {
     final summaryAsync = ref.watch(dashboardSummaryProvider);
     final reportState = ref.watch(reportProvider);
     final currency = ref.watch(settingsProvider).settings?.currency ?? '\$';
+    final user = ref.watch(authStateProvider).value;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0F0F1A),
+        drawer: _buildDrawer(context, ref),
+        body: summaryAsync.when(
+          data: (summary) => _buildBody(context, ref, summary, reportState, currency, user),
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+          ),
+          error: (err, stack) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, color: Color(0xFFFF6584), size: 64),
+                const SizedBox(height: 16),
+                Text('Error: $err',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white70)),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => ref.refresh(dashboardSummaryProvider),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6C63FF),
+                  ),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
+    );
+  }
+
+  Widget _buildBody(BuildContext context, WidgetRef ref, DashboardSummary summary,
+      dynamic reportState, String currency, dynamic user) {
+    return CustomScrollView(
+      slivers: [
+        _buildSliverAppBar(context, ref, user),
+        SliverPadding(
+          padding: const EdgeInsets.all(20),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              _buildQuickActions(context),
+              const SizedBox(height: 28),
+              _buildSectionHeader('Today\'s Overview'),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatCard(
+                      title: 'Sales Today',
+                      value: '$currency${summary.todaysSales.toStringAsFixed(2)}',
+                      icon: Icons.trending_up,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _buildStatCard(
+                      title: 'Invoices Today',
+                      value: '${summary.todaysInvoiceCount}',
+                      icon: Icons.receipt_long,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF4776E6), Color(0xFF8E54E9)],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatCard(
+                      title: 'Customers',
+                      value: '${summary.totalCustomers}',
+                      icon: Icons.people_alt,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
+                      ),
+                      onTap: () => context.push('/customers'),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _buildStatCard(
+                      title: 'Products',
+                      value: '${summary.totalProducts}',
+                      icon: Icons.inventory_2,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFCC2B5E), Color(0xFF753A88)],
+                      ),
+                      onTap: () => context.push('/products'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+              if (reportState.report != null &&
+                  reportState.report!.salesTrend.isNotEmpty) ...[
+                _buildSalesChart(reportState.report!.salesTrend, currency),
+                const SizedBox(height: 28),
+              ],
+              _buildSectionHeader('Recent Invoices', onSeeAll: () => context.push('/invoices')),
+              const SizedBox(height: 14),
+              if (summary.recentInvoices.isEmpty)
+                _buildEmptyState('No recent invoices found.')
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: summary.recentInvoices.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final invoice = summary.recentInvoices[index];
+                    return _buildInvoiceRow(context, invoice, currency);
+                  },
+                ),
+              const SizedBox(height: 40),
+            ]),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSliverAppBar(BuildContext context, WidgetRef ref, dynamic user) {
+    final now = DateTime.now();
+    final hour = now.hour;
+    final greeting = hour < 12
+        ? 'Good Morning'
+        : hour < 17
+            ? 'Good Afternoon'
+            : 'Good Evening';
+
+    return SliverAppBar(
+      expandedHeight: 160,
+      floating: false,
+      pinned: true,
+      backgroundColor: const Color(0xFF1A1A2E),
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: Colors.white),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined, color: Colors.white70),
+          onPressed: () {},
+        ),
+        IconButton(
+          icon: const Icon(Icons.logout_rounded, color: Colors.white70),
+          tooltip: 'Logout',
+          onPressed: () async {
+            await ref.read(authStateProvider.notifier).logout();
+            if (context.mounted) context.go('/login');
+          },
+        ),
+        const SizedBox(width: 8),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 56, 20, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF6C63FF), Color(0xFF3ECFCF)],
+                          ),
+                        ),
+                        child: const Icon(Icons.bolt, color: Colors.white, size: 26),
+                      ),
+                      const SizedBox(width: 14),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            greeting,
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 13,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            user?.username ?? 'Admin',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActions(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A2E),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Quick Actions',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildActionButton(
+                  context,
+                  icon: Icons.add_circle_rounded,
+                  label: 'New Invoice',
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6C63FF), Color(0xFF3ECFCF)],
+                  ),
+                  onTap: () => context.push('/invoices/create'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildActionButton(
+                  context,
+                  icon: Icons.person_add_rounded,
+                  label: 'Add Customer',
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
+                  ),
+                  onTap: () => context.push('/customers/add'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildActionButton(
+                  context,
+                  icon: Icons.inventory_2_rounded,
+                  label: 'Add Product',
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
+                  ),
+                  onTap: () => context.push('/products/add'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(BuildContext context,
+      {required IconData icon,
+      required String label,
+      required Gradient gradient,
+      required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          gradient: gradient,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.blue),
-              child: Text('Billway', style: TextStyle(color: Colors.white, fontSize: 24)),
-            ),
-            ListTile(
-              leading: const Icon(Icons.dashboard),
-              title: const Text('Dashboard'),
-              onTap: () => context.pop(),
-            ),
-            ListTile(
-              leading: const Icon(Icons.people),
-              title: const Text('Customers'),
-              onTap: () {
-                context.pop();
-                context.push('/customers');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.inventory),
-              title: const Text('Products'),
-              onTap: () {
-                context.pop();
-                context.push('/products');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.category),
-              title: const Text('Categories'),
-              onTap: () {
-                context.pop();
-                context.push('/categories');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.receipt),
-              title: const Text('Invoices'),
-              onTap: () {
-                context.pop();
-                context.push('/invoices');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.payments),
-              title: const Text('Payments'),
-              onTap: () {
-                context.pop();
-                context.push('/payments');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.analytics),
-              title: const Text('Reports'),
-              onTap: () {
-                context.pop();
-                context.push('/reports');
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
-              onTap: () {
-                context.pop();
-                context.push('/settings');
-              },
+            Icon(icon, color: Colors.white, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
       ),
-      body: summaryAsync.when(
-        data: (summary) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Quick Actions',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => context.push('/create-invoice'),
-                        icon: const Icon(Icons.add),
-                        label: const Text('New Invoice'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => context.push('/products'),
-                        icon: const Icon(Icons.inventory_2),
-                        label: const Text('Add Product'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                const Text(
-                  'Today\'s Overview',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildMetricCard(
-                        context,
-                        'Sales Today',
-                        '$currency${summary.todaysSales.toStringAsFixed(2)}',
-                        Icons.attach_money,
-                        Colors.green,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildMetricCard(
-                        context,
-                        'Invoices Today',
-                        '${summary.todaysInvoiceCount}',
-                        Icons.receipt_long,
-                        Colors.blue,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildMetricCard(
-                        context,
-                        'Customers',
-                        '${summary.totalCustomers}',
-                        Icons.people,
-                        Colors.orange,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildMetricCard(
-                        context,
-                        'Products',
-                        '${summary.totalProducts}',
-                        Icons.inventory_2,
-                        Colors.purple,
-                        onTap: () => context.push('/products'),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildMetricCard(
-                        context,
-                        'Invoices',
-                        '${summary.totalInvoices}',
-                        Icons.receipt,
-                        Colors.orange,
-                        onTap: () => context.push('/invoices'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                if (reportState.report != null && reportState.report!.salesTrend.isNotEmpty)
-                  _buildMiniSalesChart(reportState.report!.salesTrend),
-                const SizedBox(height: 32),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Recent Invoices',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Text('See All'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                if (summary.recentInvoices.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: Center(child: Text('No recent invoices found.')),
-                  )
-                else
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: summary.recentInvoices.length,
-                    itemBuilder: (context, index) {
-                      final invoice = summary.recentInvoices[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          leading: const CircleAvatar(
-                            child: Icon(Icons.receipt_long),
-                          ),
-                          title: Text(invoice.customerName),
-                          subtitle: Text('Invoice #${invoice.id} • ${invoice.createdAt}'),
-                          trailing: Text(
-                            '$currency${invoice.totalAmount.toStringAsFixed(2)}',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-              ],
+    );
+  }
+
+  Widget _buildStatCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Gradient gradient,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: gradient,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
             ),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, color: Colors.red, size: 64),
-              const SizedBox(height: 16),
-              Text('Error: $err', textAlign: TextAlign.center),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.refresh(dashboardSummaryProvider),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildMetricCard(
-    BuildContext context,
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-    {VoidCallback? onTap},
-  ) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        onTap: onTap ?? () {
-          if (title == 'Customers') {
-            context.push('/customers');
-          }
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(icon, color: color, size: 28),
-                  const Spacer(),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMiniSalesChart(List trend) {
-    final maxY = trend.map((e) => e.total).reduce((a, b) => a > b ? a : b);
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Sales Trend (Last 30 Days)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 150,
-              child: LineChart(
-                LineChartData(
-                  gridData: const FlGridData(show: false),
-                  titlesData: const FlTitlesData(show: false),
-                  borderData: FlBorderData(show: false),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: trend.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.total)).toList(),
-                      isCurved: true,
-                      color: Colors.blue,
-                      barWidth: 3,
-                      isStrokeCapRound: true,
-                      dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(show: true, color: Colors.blue.withOpacity(0.2)),
+            Icon(icon, color: Colors.white70, size: 24),
+            const SizedBox(height: 12),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, {VoidCallback? onSeeAll}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.3,
+          ),
+        ),
+        if (onSeeAll != null)
+          GestureDetector(
+            onTap: onSeeAll,
+            child: const Text(
+              'See All →',
+              style: TextStyle(
+                color: Color(0xFF6C63FF),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSalesChart(List trend, String currency) {
+    final maxY = trend
+        .map((e) => e.total as double)
+        .reduce((a, b) => a > b ? a : b);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A2E),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Sales Trend',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const Text(
+            'Last 30 days',
+            style: TextStyle(color: Colors.white38, fontSize: 12),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 160,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: Colors.white10,
+                    strokeWidth: 1,
+                  ),
+                ),
+                titlesData: const FlTitlesData(show: false),
+                borderData: FlBorderData(show: false),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: trend
+                        .asMap()
+                        .entries
+                        .map((e) => FlSpot(e.key.toDouble(), e.value.total as double))
+                        .toList(),
+                    isCurved: true,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF6C63FF), Color(0xFF3ECFCF)],
                     ),
-                  ],
-                  minX: 0,
-                  maxX: (trend.length - 1).toDouble(),
-                  minY: 0,
-                  maxY: maxY * 1.2,
+                    barWidth: 3,
+                    isStrokeCapRound: true,
+                    dotData: const FlDotData(show: false),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF6C63FF).withOpacity(0.25),
+                          Colors.transparent,
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                ],
+                minX: 0,
+                maxX: (trend.length - 1).toDouble(),
+                minY: 0,
+                maxY: maxY * 1.2,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInvoiceRow(BuildContext context, RecentInvoice invoice, String currency) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A2E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: const Color(0xFF6C63FF).withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.receipt_rounded,
+              color: Color(0xFF6C63FF),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  invoice.customerName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Invoice #${invoice.id}',
+                  style: const TextStyle(color: Colors.white38, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '$currency${invoice.totalAmount.toStringAsFixed(2)}',
+            style: const TextStyle(
+              color: Color(0xFF38EF7D),
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String message) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A2E),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.inbox_rounded, color: Colors.white24, size: 48),
+          const SizedBox(height: 12),
+          Text(
+            message,
+            style: const TextStyle(color: Colors.white38, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context, WidgetRef ref) {
+    return Drawer(
+      backgroundColor: const Color(0xFF1A1A2E),
+      child: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF6C63FF), Color(0xFF3ECFCF)],
+                      ),
+                    ),
+                    child: const Icon(Icons.bolt, color: Colors.white, size: 26),
+                  ),
+                  const SizedBox(width: 12),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Billway',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800)),
+                      Text('POS System',
+                          style: TextStyle(color: Colors.white38, fontSize: 12)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: Colors.white10, height: 1),
+            const SizedBox(height: 8),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  _buildDrawerItem(context, Icons.dashboard_rounded, 'Dashboard', '/'),
+                  _buildDrawerItem(context, Icons.people_rounded, 'Customers', '/customers'),
+                  _buildDrawerItem(context, Icons.inventory_2_rounded, 'Products', '/products'),
+                  _buildDrawerItem(context, Icons.category_rounded, 'Categories', '/categories'),
+                  _buildDrawerItem(context, Icons.receipt_long_rounded, 'Invoices', '/invoices'),
+                  _buildDrawerItem(context, Icons.payments_rounded, 'Payments', '/payments'),
+                  _buildDrawerItem(context, Icons.analytics_rounded, 'Reports', '/reports'),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Divider(color: Colors.white10),
+                  ),
+                  _buildDrawerItem(context, Icons.settings_rounded, 'Settings', '/settings'),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: GestureDetector(
+                onTap: () async {
+                  Navigator.pop(context);
+                  await ref.read(authStateProvider.notifier).logout();
+                  if (context.mounted) context.go('/login');
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.red.withOpacity(0.3)),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
+                      SizedBox(width: 8),
+                      Text('Logout',
+                          style: TextStyle(
+                              color: Colors.redAccent, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
                 ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDrawerItem(
+      BuildContext context, IconData icon, String label, String route) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.white60, size: 22),
+      title: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      onTap: () {
+        Navigator.pop(context);
+        context.go(route);
+      },
+      horizontalTitleGap: 8,
     );
   }
 }
