@@ -1,5 +1,6 @@
 import '../../customers/domain/entities/customer.dart';
 import '../../products/domain/entities/product.dart';
+import '../../payments/domain/entities/payment.dart';
 
 class InvoiceItem {
   final int? id;
@@ -34,10 +35,13 @@ class Invoice {
   final double discountAmount;
   final double taxTotal;
   final double grandTotal;
+  final double amountPaid;
+  final double balanceDue;
   final String paymentMethod;
   final String status;
   final String? createdAt;
   final List<InvoiceItem> items;
+  final List<Payment> payments;
 
   Invoice({
     this.id,
@@ -48,10 +52,13 @@ class Invoice {
     this.discountAmount = 0.0,
     this.taxTotal = 0.0,
     this.grandTotal = 0.0,
+    this.amountPaid = 0.0,
+    this.balanceDue = 0.0,
     this.paymentMethod = 'CASH',
     this.status = 'UNPAID',
     this.createdAt,
     required this.items,
+    this.payments = const [],
   });
 }
 

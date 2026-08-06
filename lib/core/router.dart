@@ -24,6 +24,8 @@ import '../features/invoices/presentation/screens/create_invoice_screen.dart';
 import '../features/invoices/presentation/screens/invoice_detail_screen.dart';
 import '../features/invoices/domain/entities/invoice.dart';
 
+import '../features/payments/presentation/screens/payment_list_screen.dart';
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
 
@@ -130,6 +132,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           final invoice = state.extra as Invoice;
           return InvoiceDetailScreen(invoice: invoice);
         },
+      ),
+      GoRoute(
+        path: '/payments',
+        builder: (context, state) => const PaymentListScreen(),
       ),
     ],
   );

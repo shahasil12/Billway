@@ -64,6 +64,14 @@ class DashboardScreen extends ConsumerWidget {
                 context.push('/invoices');
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.payments),
+              title: const Text('Payments'),
+              onTap: () {
+                context.pop();
+                context.push('/payments');
+              },
+            ),
           ],
         ),
       ),

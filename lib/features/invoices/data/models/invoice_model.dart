@@ -1,5 +1,6 @@
 import '../../domain/entities/invoice.dart';
 import '../../customers/data/models/customer_model.dart';
+import '../../payments/data/models/payment_model.dart';
 
 class InvoiceItemModel extends InvoiceItem {
   InvoiceItemModel({
@@ -62,10 +63,13 @@ class InvoiceModel extends Invoice {
       discountAmount: double.tryParse((json['discount_amount'] ?? '0').toString()) ?? 0,
       taxTotal: double.tryParse((json['tax_total'] ?? '0').toString()) ?? 0,
       grandTotal: double.tryParse((json['grand_total'] ?? '0').toString()) ?? 0,
+      amountPaid: double.tryParse((json['amount_paid'] ?? '0').toString()) ?? 0,
+      balanceDue: double.tryParse((json['balance_due'] ?? '0').toString()) ?? 0,
       paymentMethod: json['payment_method'] ?? 'CASH',
       status: json['status'] ?? 'UNPAID',
       createdAt: json['created_at'],
       items: (json['items'] as List?)?.map((i) => InvoiceItemModel.fromJson(i)).toList() ?? [],
+      payments: (json['payments'] as List?)?.map((i) => PaymentModel.fromJson(i)).toList() ?? [],
     );
   }
 
