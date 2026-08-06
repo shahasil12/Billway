@@ -42,7 +42,9 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
     );
 
     final response = await apiClient.dio.post('invoices/', data: model.toJson());
-    return InvoiceModel.fromJson(response.data);
+    // The create response is minimal — fetch the full invoice by ID
+    final int newId = response.data['id'];
+    return getInvoice(newId);
   }
 
   @override
