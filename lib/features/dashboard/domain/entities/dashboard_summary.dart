@@ -1,12 +1,14 @@
 class RecentInvoice {
   final int id;
   final String customerName;
+  final String? reference;
   final double totalAmount;
   final String createdAt;
 
   RecentInvoice({
     required this.id,
     required this.customerName,
+    this.reference,
     required this.totalAmount,
     required this.createdAt,
   });

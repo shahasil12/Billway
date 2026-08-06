@@ -4,6 +4,7 @@ class RecentInvoiceModel extends RecentInvoice {
   RecentInvoiceModel({
     required super.id,
     required super.customerName,
+    super.reference,
     required super.totalAmount,
     required super.createdAt,
   });
@@ -12,6 +13,7 @@ class RecentInvoiceModel extends RecentInvoice {
     return RecentInvoiceModel(
       id: json['id'],
       customerName: json['customer'] != null ? json['customer']['name'] : 'Unknown',
+      reference: json['reference'],
       totalAmount: double.tryParse((json['grand_total'] ?? 0).toString()) ?? 0.0,
       createdAt: json['created_at'] ?? '',
     );

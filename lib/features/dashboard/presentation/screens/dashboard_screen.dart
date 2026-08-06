@@ -535,7 +535,7 @@ class DashboardScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'Invoice #${invoice.id}',
+                  invoice.reference ?? 'Invoice #${invoice.id}',
                   style: const TextStyle(color: Colors.white38, fontSize: 12),
                 ),
               ],
