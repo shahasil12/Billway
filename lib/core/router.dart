@@ -19,6 +19,11 @@ import '../features/products/presentation/screens/product_detail_screen.dart';
 import '../features/products/presentation/screens/add_edit_product_screen.dart';
 import '../features/products/domain/entities/product.dart';
 
+import '../features/invoices/presentation/screens/invoice_list_screen.dart';
+import '../features/invoices/presentation/screens/create_invoice_screen.dart';
+import '../features/invoices/presentation/screens/invoice_detail_screen.dart';
+import '../features/invoices/domain/entities/invoice.dart';
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
 
@@ -109,6 +114,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final product = state.extra as Product;
           return ProductDetailScreen(product: product);
+        },
+      ),
+      GoRoute(
+        path: '/invoices',
+        builder: (context, state) => const InvoiceListScreen(),
+      ),
+      GoRoute(
+        path: '/invoices/create',
+        builder: (context, state) => const CreateInvoiceScreen(),
+      ),
+      GoRoute(
+        path: '/invoices/:id',
+        builder: (context, state) {
+          final invoice = state.extra as Invoice;
+          return InvoiceDetailScreen(invoice: invoice);
         },
       ),
     ],

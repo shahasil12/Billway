@@ -56,6 +56,14 @@ class DashboardScreen extends ConsumerWidget {
                 context.push('/products');
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.receipt),
+              title: const Text('Invoices'),
+              onTap: () {
+                context.pop();
+                context.push('/invoices');
+              },
+            ),
           ],
         ),
       ),
@@ -141,6 +149,17 @@ class DashboardScreen extends ConsumerWidget {
                   Icons.inventory_2,
                   Colors.purple,
                   onTap: () => context.push('/products'),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildMetricCard(
+                  context,
+                  'Invoices',
+                  '${summary.totalInvoices}',
+                  Icons.receipt,
+                  Colors.orange,
+                  onTap: () => context.push('/invoices'),
                 ),
               ),
             ],
