@@ -14,6 +14,9 @@ import '../features/dashboard/domain/repositories/dashboard_repository.dart';
 import '../features/customers/data/datasources/customer_remote_data_source.dart';
 import '../features/customers/data/repositories/customer_repository_impl.dart';
 import '../features/customers/domain/repositories/customer_repository.dart';
+import '../features/categories/data/datasources/category_remote_data_source.dart';
+import '../features/categories/data/repositories/category_repository_impl.dart';
+import '../features/categories/domain/repositories/category_repository.dart';
 
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
   return const FlutterSecureStorage();
@@ -66,4 +69,13 @@ final customerRemoteDataSourceProvider = Provider<CustomerRemoteDataSource>((ref
 
 final customerRepositoryProvider = Provider<CustomerRepository>((ref) {
   return CustomerRepositoryImpl(ref.read(customerRemoteDataSourceProvider));
+});
+
+// Category Providers
+final categoryRemoteDataSourceProvider = Provider<CategoryRemoteDataSource>((ref) {
+  return CategoryRemoteDataSourceImpl(ref.read(apiClientProvider));
+});
+
+final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
+  return CategoryRepositoryImpl(ref.read(categoryRemoteDataSourceProvider));
 });

@@ -10,6 +10,10 @@ import '../features/customers/presentation/screens/add_edit_customer_screen.dart
 import '../features/customers/presentation/screens/customer_detail_screen.dart';
 import '../features/customers/domain/entities/customer.dart';
 
+import '../features/categories/presentation/screens/category_list_screen.dart';
+import '../features/categories/presentation/screens/add_edit_category_screen.dart';
+import '../features/categories/domain/entities/category.dart';
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
 
@@ -63,6 +67,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = int.parse(state.pathParameters['id']!);
           return CustomerDetailScreen(customerId: id);
+        },
+      ),
+      GoRoute(
+        path: '/categories',
+        builder: (context, state) => const CategoryListScreen(),
+      ),
+      GoRoute(
+        path: '/categories/add',
+        builder: (context, state) => const AddEditCategoryScreen(),
+      ),
+      GoRoute(
+        path: '/categories/edit',
+        builder: (context, state) {
+          final category = state.extra as Category;
+          return AddEditCategoryScreen(category: category);
         },
       ),
     ],
