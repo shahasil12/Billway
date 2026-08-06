@@ -680,8 +680,12 @@ class DashboardScreen extends ConsumerWidget {
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onTap: () {
-        Navigator.pop(context);
-        context.go(route);
+        Navigator.pop(context); // close drawer
+        if (route == '/') {
+          context.go('/'); // dashboard root - no back needed
+        } else {
+          context.push(route); // all other screens - back button returns to dashboard
+        }
       },
       horizontalTitleGap: 8,
     );
