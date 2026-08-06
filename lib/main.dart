@@ -21,6 +21,7 @@ class BillwayApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'Billway POS',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.deepPurple,
