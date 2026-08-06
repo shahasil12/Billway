@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:fl_chart/fl_chart.dart';
+import '../../../../core/providers.dart';
 import '../controllers/dashboard_controller.dart';
+import '../../reports/presentation/controllers/report_controller.dart';
 import '../../domain/entities/dashboard_summary.dart';
+import 'package:go_router/go_router.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -10,6 +13,7 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final summaryAsync = ref.watch(dashboardSummaryProvider);
+    final reportState = ref.watch(reportProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -70,6 +74,14 @@ class DashboardScreen extends ConsumerWidget {
               onTap: () {
                 context.pop();
                 context.push('/payments');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.analytics),
+              title: const Text('Reports'),
+              onTap: () {
+                context.pop();
+                context.push('/reports');
               },
             ),
           ],
@@ -173,6 +185,9 @@ class DashboardScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 32),
+          if (reportState.report != null && reportState.report!.salesTrend.isNotEmpty)
+            _buildMiniSalesChart(reportState.report!.salesTrend),
+          const SizedBox(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -266,6 +281,48 @@ class DashboardScreen extends ConsumerWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniSalesChart(List trend) {
+    final maxY = trend.map((e) => e.total).reduce((a, b) => a > b ? a : b);
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Sales Trend (Last 30 Days)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 150,
+              child: LineChart(
+                LineChartData(
+                  gridData: const FlGridData(show: false),
+                  titlesData: const FlTitlesData(show: false),
+                  borderData: FlBorderData(show: false),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: trend.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.total)).toList(),
+                      isCurved: true,
+                      color: Colors.blue,
+                      barWidth: 3,
+                      isStrokeCapRound: true,
+                      dotData: const FlDotData(show: false),
+                      belowBarData: BarAreaData(show: true, color: Colors.blue.withOpacity(0.2)),
+                    ),
+                  ],
+                  minX: 0,
+                  maxX: (trend.length - 1).toDouble(),
+                  minY: 0,
+                  maxY: maxY * 1.2,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
