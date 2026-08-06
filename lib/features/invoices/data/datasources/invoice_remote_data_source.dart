@@ -33,6 +33,7 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
   Future<InvoiceModel> createInvoice(Invoice invoice) async {
     final model = InvoiceModel(
       customerId: invoice.customerId,
+      reference: invoice.reference,
       discountPercentage: invoice.discountPercentage,
       paymentMethod: invoice.paymentMethod,
       items: invoice.items.map((i) => InvoiceItemModel(

@@ -42,6 +42,7 @@ class InvoiceModel extends Invoice {
     super.id,
     super.customer,
     required super.customerId,
+    super.reference,
     super.subtotal,
     super.discountPercentage,
     super.discountAmount,
@@ -61,6 +62,7 @@ class InvoiceModel extends Invoice {
       id: json['id'],
       customer: json['customer'] != null ? CustomerModel.fromJson(json['customer']) : null,
       customerId: json['customer'] != null ? json['customer']['id'] : 0,
+      reference: json['reference'],
       subtotal: double.tryParse((json['subtotal'] ?? '0').toString()) ?? 0,
       discountPercentage: double.tryParse((json['discount_percentage'] ?? '0').toString()) ?? 0,
       discountAmount: double.tryParse((json['discount_amount'] ?? '0').toString()) ?? 0,
@@ -79,6 +81,7 @@ class InvoiceModel extends Invoice {
   Map<String, dynamic> toJson() {
     return {
       'customer': customerId,
+      'reference': reference,
       'discount_percentage': discountPercentage,
       'payment_method': paymentMethod,
       'items': items.map((i) => (i as InvoiceItemModel).toJson()).toList(),

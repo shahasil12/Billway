@@ -11,8 +11,8 @@ class RecentInvoiceModel extends RecentInvoice {
   factory RecentInvoiceModel.fromJson(Map<String, dynamic> json) {
     return RecentInvoiceModel(
       id: json['id'],
-      customerName: json['customer_name'] ?? '',
-      totalAmount: double.tryParse(json['total_amount'].toString()) ?? 0.0,
+      customerName: json['customer'] != null ? json['customer']['name'] : 'Unknown',
+      totalAmount: double.tryParse((json['grand_total'] ?? 0).toString()) ?? 0.0,
       createdAt: json['created_at'] ?? '',
     );
   }

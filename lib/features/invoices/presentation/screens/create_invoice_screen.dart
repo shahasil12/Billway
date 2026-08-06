@@ -9,6 +9,7 @@ import '../../../products/presentation/controllers/product_list_controller.dart'
 import '../../../customers/domain/entities/customer.dart';
 import '../../../products/domain/entities/product.dart';
 import '../controllers/invoice_list_controller.dart';
+import '../../../dashboard/presentation/controllers/dashboard_controller.dart';
 
 class CreateInvoiceScreen extends ConsumerStatefulWidget {
   const CreateInvoiceScreen({super.key});
@@ -25,6 +26,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
   bool _isLoading = false;
 
   final _discountController = TextEditingController(text: '0');
+  final _referenceController = TextEditingController();
 
   @override
   void initState() {
@@ -38,6 +40,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
   @override
   void dispose() {
     _discountController.dispose();
+    _referenceController.dispose();
     super.dispose();
   }
 
@@ -111,6 +114,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
 
     final invoice = Invoice(
       customerId: _selectedCustomer!.id!,
+      reference: _referenceController.text.trim().isNotEmpty ? _referenceController.text.trim() : null,
       discountPercentage: _discountPercentage,
       paymentMethod: _paymentMethod,
       items: _items,
@@ -126,6 +130,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
       },
       (newInvoice) {
         ref.read(invoiceListProvider.notifier).fetchInvoices(isRefresh: true);
+        ref.refresh(dashboardSummaryProvider); // Refresh dashboard to show new invoice
         if (mounted) {
           context.pop();
           context.push('/invoices/${newInvoice.id}', extra: newInvoice);
@@ -154,6 +159,11 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                   value: _selectedCustomer,
                   items: customers.map((c) => DropdownMenuItem(value: c, child: Text(c.name))).toList(),
                   onChanged: (val) => setState(() => _selectedCustomer = val),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _referenceController,
+                  decoration: const InputDecoration(labelText: 'Reference Number (Optional)', border: OutlineInputBorder()),
                 ),
                 const SizedBox(height: 24),
                 Row(

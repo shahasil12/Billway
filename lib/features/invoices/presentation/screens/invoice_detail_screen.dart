@@ -12,6 +12,7 @@ import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../../payments/domain/entities/payment.dart';
 import '../controllers/invoice_list_controller.dart';
 import '../../../payments/presentation/controllers/payment_list_controller.dart';
+import '../../../dashboard/presentation/controllers/dashboard_controller.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/printing/pdf_invoice_generator.dart';
 import '../widgets/thermal_printer_dialog.dart';
@@ -167,6 +168,7 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
                   (failure) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(failure.message))),
                   (_) {
                     ref.read(invoiceListProvider.notifier).fetchInvoices(isRefresh: true);
+                    ref.refresh(dashboardSummaryProvider); // Refresh dashboard when deleted
                     if (mounted) context.pop();
                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invoice deleted')));
                   },
@@ -193,6 +195,10 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
                     Text(_invoice.customer?.name ?? 'Unknown', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     if (_invoice.customer?.email != null) Text(_invoice.customer!.email!),
                     if (_invoice.customer?.phone != null) Text(_invoice.customer!.phone!),
+                    if (_invoice.reference != null && _invoice.reference!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text('Reference: ${_invoice.reference}', style: const TextStyle(fontWeight: FontWeight.w500, color: Colors.indigo)),
+                    ],
                     const Divider(height: 32),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

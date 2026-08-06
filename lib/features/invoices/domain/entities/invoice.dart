@@ -30,6 +30,7 @@ class Invoice {
   final int? id;
   final Customer? customer;
   final int customerId; // Used for creation
+  final String? reference;
   final double subtotal;
   final double discountPercentage;
   final double discountAmount;
@@ -47,6 +48,7 @@ class Invoice {
     this.id,
     this.customer,
     required this.customerId,
+    this.reference,
     this.subtotal = 0.0,
     this.discountPercentage = 0.0,
     this.discountAmount = 0.0,
