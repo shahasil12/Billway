@@ -6,7 +6,7 @@ class ApiClient {
   final FlutterSecureStorage secureStorage;
 
   ApiClient(this.dio, this.secureStorage) {
-    dio.options.baseUrl = 'http://10.0.2.2:8000/api/'; // For Android emulator, adjust if iOS or web
+    dio.options.baseUrl = 'https://billway-api-a9ea.onrender.com/api/'; 
     dio.options.connectTimeout = const Duration(seconds: 5);
     dio.options.receiveTimeout = const Duration(seconds: 3);
 
