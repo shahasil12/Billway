@@ -7,8 +7,8 @@ class ApiClient {
 
   ApiClient(this.dio, this.secureStorage) {
     dio.options.baseUrl = 'https://billway-api-a9ea.onrender.com/api/'; 
-    dio.options.connectTimeout = const Duration(seconds: 5);
-    dio.options.receiveTimeout = const Duration(seconds: 3);
+    dio.options.connectTimeout = const Duration(seconds: 60);
+    dio.options.receiveTimeout = const Duration(seconds: 60);
 
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
