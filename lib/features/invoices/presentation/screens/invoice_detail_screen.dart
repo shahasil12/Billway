@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
@@ -141,6 +142,37 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
             icon: _isDownloading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.download),
             onPressed: _isDownloading ? null : _downloadAndOpenPdf,
             tooltip: 'Download PDF',
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+            tooltip: 'Delete Invoice',
+            onPressed: () async {
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Delete Invoice?'),
+                  content: Text('Are you sure you want to delete Invoice #${_invoice.id}? This cannot be undone.'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
+              if (confirmed == true && mounted) {
+                final result = await ref.read(invoiceRepositoryProvider).deleteInvoice(_invoice.id!);
+                result.fold(
+                  (failure) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(failure.message))),
+                  (_) {
+                    ref.read(invoiceListProvider.notifier).fetchInvoices(isRefresh: true);
+                    if (mounted) context.pop();
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invoice deleted')));
+                  },
+                );
+              }
+            },
           ),
         ],
       ),
