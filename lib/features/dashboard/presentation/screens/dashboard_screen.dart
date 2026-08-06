@@ -198,16 +198,14 @@ class DashboardScreen extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        width: 46,
-                        height: 46,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF6C63FF), Color(0xFF3ECFCF)],
-                          ),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          width: 46,
+                          height: 46,
+                          fit: BoxFit.contain,
                         ),
-                        child: const Icon(Icons.bolt, color: Colors.white, size: 26),
                       ),
                       const SizedBox(width: 14),
                       Column(
@@ -588,16 +586,14 @@ class DashboardScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(24),
               child: Row(
                 children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF6C63FF), Color(0xFF3ECFCF)],
-                      ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      width: 46,
+                      height: 46,
+                      fit: BoxFit.contain,
                     ),
-                    child: const Icon(Icons.bolt, color: Colors.white, size: 26),
                   ),
                   const SizedBox(width: 12),
                   const Column(
