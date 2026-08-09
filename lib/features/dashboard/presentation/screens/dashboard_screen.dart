@@ -27,7 +27,7 @@ class DashboardScreen extends ConsumerWidget {
         body: summaryAsync.when(
           data: (summary) => _buildBody(context, ref, summary, reportState, currency, user),
           loading: () => const Center(
-            child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
+            child: CircularProgressIndicator(),
           ),
           error: (err, stack) => Center(
             child: Column(
@@ -186,7 +186,7 @@ class DashboardScreen extends ConsumerWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Theme.of(context).colorScheme.surface, Color(0xFF16213E), Color(0xFF0F3460)],
+              colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
             ),
           ),
           child: SafeArea(
@@ -574,7 +574,7 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Billway',
@@ -602,8 +602,8 @@ class DashboardScreen extends ConsumerWidget {
                   _buildDrawerItem(context, Icons.receipt_long_rounded, 'Invoices', '/invoices'),
                   _buildDrawerItem(context, Icons.payments_rounded, 'Payments', '/payments'),
                   _buildDrawerItem(context, Icons.analytics_rounded, 'Reports', '/reports'),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     child: Divider(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1)),
                   ),
                   _buildDrawerItem(context, Icons.settings_rounded, 'Settings', '/settings'),
@@ -633,7 +633,7 @@ class DashboardScreen extends ConsumerWidget {
                       Text('Logout',
                           style: TextStyle(
                               color: Colors.redAccent, fontWeight: FontWeight.w600)),
-                    ],
+                    ]
                   ),
                 ),
               ),

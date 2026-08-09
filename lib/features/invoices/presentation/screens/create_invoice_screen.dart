@@ -159,7 +159,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
               children: [
                 DropdownButtonFormField<Customer>(
                   decoration: const InputDecoration(labelText: 'Select Customer', border: OutlineInputBorder()),
-                  initialValue: _selectedCustomer,
+                  value: _selectedCustomer,
                   items: customers.map((c) => DropdownMenuItem(value: c, child: Text(c.name))).toList(),
                   onChanged: (val) => setState(() => _selectedCustomer = val),
                 ),
@@ -219,7 +219,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         decoration: const InputDecoration(labelText: 'Payment Method', border: OutlineInputBorder()),
-                        initialValue: _paymentMethod,
+                        value: _paymentMethod,
                         items: ['CASH', 'CARD', 'UPI', 'OTHER'].map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
                         onChanged: (val) => setState(() => _paymentMethod = val!),
                       ),
@@ -232,7 +232,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onSurface,
+              color: Theme.of(context).colorScheme.surface,
               boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
             ),
             child: SafeArea(
