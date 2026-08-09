@@ -140,7 +140,7 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
             tooltip: 'Print',
           ),
           IconButton(
-            icon: _isDownloading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurface, strokeWidth: 2)) : const Icon(Icons.download),
+            icon: _isDownloading ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurface, strokeWidth: 2)) : const Icon(Icons.download),
             onPressed: _isDownloading ? null : _downloadAndOpenPdf,
             tooltip: 'Download PDF',
           ),
@@ -396,7 +396,7 @@ class _RecordPaymentBottomSheetState extends ConsumerState<_RecordPaymentBottomS
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             decoration: const InputDecoration(labelText: 'Payment Method', border: OutlineInputBorder()),
-            value: _paymentMethod,
+            initialValue: _paymentMethod,
             items: ['CASH', 'CARD', 'UPI', 'OTHER'].map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
             onChanged: (val) => setState(() => _paymentMethod = val!),
           ),
@@ -416,7 +416,7 @@ class _RecordPaymentBottomSheetState extends ConsumerState<_RecordPaymentBottomS
             height: 50,
             child: ElevatedButton(
               onPressed: _isLoading ? null : _submit,
-              child: _isLoading ? const CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurface) : const Text('Save Payment'),
+              child: _isLoading ? CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurface) : const Text('Save Payment'),
             ),
           ),
           const SizedBox(height: 24),

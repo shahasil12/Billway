@@ -65,12 +65,12 @@ class DashboardScreen extends ConsumerWidget {
             delegate: SliverChildListDelegate([
               _buildQuickActions(context),
               const SizedBox(height: 28),
-              _buildSectionHeader('Today\'s Overview'),
+              _buildSectionHeader(context, 'Today\'s Overview'),
               const SizedBox(height: 14),
               Row(
                 children: [
                   Expanded(
-                    child: _buildStatCard(
+                    child: _buildStatCard(context,
                       title: 'Sales Today',
                       value: '$currency${summary.todaysSales.toStringAsFixed(2)}',
                       icon: Icons.trending_up,
@@ -81,7 +81,7 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: _buildStatCard(
+                    child: _buildStatCard(context,
                       title: 'Invoices Today',
                       value: '${summary.todaysInvoiceCount}',
                       icon: Icons.receipt_long,
@@ -96,7 +96,7 @@ class DashboardScreen extends ConsumerWidget {
               Row(
                 children: [
                   Expanded(
-                    child: _buildStatCard(
+                    child: _buildStatCard(context,
                       title: 'Customers',
                       value: '${summary.totalCustomers}',
                       icon: Icons.people_alt,
@@ -108,7 +108,7 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: _buildStatCard(
+                    child: _buildStatCard(context,
                       title: 'Products',
                       value: '${summary.totalProducts}',
                       icon: Icons.inventory_2,
@@ -123,13 +123,13 @@ class DashboardScreen extends ConsumerWidget {
               const SizedBox(height: 28),
               if (reportState.report != null &&
                   reportState.report!.salesTrend.isNotEmpty) ...[
-                _buildSalesChart(reportState.report!.salesTrend, currency),
+                _buildSalesChart(context, reportState.report!.salesTrend, currency),
                 const SizedBox(height: 28),
               ],
-              _buildSectionHeader('Recent Invoices', onSeeAll: () => context.push('/invoices')),
+              _buildSectionHeader(context, 'Recent Invoices', onSeeAll: () => context.push('/invoices')),
               const SizedBox(height: 14),
               if (summary.recentInvoices.isEmpty)
-                _buildEmptyState('No recent invoices found.')
+                _buildEmptyState(context, 'No recent invoices found.')
               else
                 ListView.separated(
                   shrinkWrap: true,
@@ -164,7 +164,7 @@ class DashboardScreen extends ConsumerWidget {
       pinned: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       surfaceTintColor: Colors.transparent,
-      iconTheme: const IconThemeData(color: Theme.of(context).colorScheme.onSurface),
+      iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface),
       actions: [
         IconButton(
           icon: Icon(Icons.notifications_outlined, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
@@ -264,8 +264,7 @@ class DashboardScreen extends ConsumerWidget {
                   context,
                   icon: Icons.add_circle_rounded,
                   label: 'New Invoice',
-                  gradient: const LinearGradient(
-                    colors: [Theme.of(context).colorScheme.primary, Color(0xFF3ECFCF)],
+                  gradient: LinearGradient(colors: [Theme.of(context).colorScheme.primary, Color(0xFF3ECFCF)],
                   ),
                   onTap: () => context.push('/invoices/create'),
                 ),
@@ -332,7 +331,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatCard({
+  Widget _buildStatCard(BuildContext context, {
     required String title,
     required String value,
     required IconData icon,
@@ -380,7 +379,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title, {VoidCallback? onSeeAll}) {
+  Widget _buildSectionHeader(BuildContext context, String title, {VoidCallback? onSeeAll}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -405,7 +404,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSalesChart(List trend, String currency) {
+  Widget _buildSalesChart(BuildContext context, List trend, String currency) {
     final maxY = trend
         .map((e) => e.total as double)
         .reduce((a, b) => a > b ? a : b);
@@ -449,8 +448,7 @@ class DashboardScreen extends ConsumerWidget {
                         .map((e) => FlSpot(e.key.toDouble(), e.value.total as double))
                         .toList(),
                     isCurved: true,
-                    gradient: const LinearGradient(
-                      colors: [Theme.of(context).colorScheme.primary, Color(0xFF3ECFCF)],
+                    gradient: LinearGradient(colors: [Theme.of(context).colorScheme.primary, Color(0xFF3ECFCF)],
                     ),
                     barWidth: 3,
                     isStrokeCapRound: true,
@@ -534,7 +532,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(String message) {
+  Widget _buildEmptyState(BuildContext context, String message) {
     return Container(
       padding: const EdgeInsets.all(32),
       alignment: Alignment.center,
@@ -591,7 +589,7 @@ class DashboardScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            const Divider(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1), height: 1),
+            Divider(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1), height: 1),
             const SizedBox(height: 8),
             Expanded(
               child: ListView(
@@ -649,7 +647,7 @@ class DashboardScreen extends ConsumerWidget {
   Widget _buildDrawerItem(
       BuildContext context, IconData icon, String label, String route) {
     return ListTile(
-      leading: Icon(icon, color: Theme.of(context).colorScheme.onSurface60, size: 22),
+      leading: Icon(icon, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), size: 22),
       title: Text(
         label,
         style: TextStyle(color: Theme.of(context).colorScheme.onSurface,

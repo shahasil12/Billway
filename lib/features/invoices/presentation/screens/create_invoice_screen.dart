@@ -159,7 +159,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
               children: [
                 DropdownButtonFormField<Customer>(
                   decoration: const InputDecoration(labelText: 'Select Customer', border: OutlineInputBorder()),
-                  value: _selectedCustomer,
+                  initialValue: _selectedCustomer,
                   items: customers.map((c) => DropdownMenuItem(value: c, child: Text(c.name))).toList(),
                   onChanged: (val) => setState(() => _selectedCustomer = val),
                 ),
@@ -219,7 +219,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         decoration: const InputDecoration(labelText: 'Payment Method', border: OutlineInputBorder()),
-                        value: _paymentMethod,
+                        initialValue: _paymentMethod,
                         items: ['CASH', 'CARD', 'UPI', 'OTHER'].map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
                         onChanged: (val) => setState(() => _paymentMethod = val!),
                       ),
@@ -254,7 +254,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _submit,
-                      child: _isLoading ? const CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurface) : const Text('Generate Invoice & Save', style: TextStyle(fontSize: 16)),
+                      child: _isLoading ? CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurface) : const Text('Generate Invoice & Save', style: TextStyle(fontSize: 16)),
                     ),
                   ),
                 ],

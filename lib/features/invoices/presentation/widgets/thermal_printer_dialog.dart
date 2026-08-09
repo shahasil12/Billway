@@ -94,8 +94,8 @@ class _ThermalPrinterDialogState extends ConsumerState<ThermalPrinterDialog> {
           children: [
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(labelText: 'Connection Type', border: OutlineInputBorder()),
-              value: _connectionType,
-              items: ['Network', 'Bluetooth'].map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
+              initialValue: _connectionType,
+              items: ['Network', 'Bluetooth'].map((type) => DropdownMenuItem(initialValue: type, child: Text(type))).toList(),
               onChanged: (val) {
                 setState(() => _connectionType = val!);
               },
@@ -110,8 +110,8 @@ class _ThermalPrinterDialogState extends ConsumerState<ThermalPrinterDialog> {
             else
               DropdownButtonFormField<BluetoothDevice>(
                 decoration: const InputDecoration(labelText: 'Paired Device', border: OutlineInputBorder()),
-                value: _selectedDevice,
-                items: _devices.map((d) => DropdownMenuItem(value: d, child: Text(d.name ?? 'Unknown'))).toList(),
+                initialValue: _selectedDevice,
+                items: _devices.map((d) => DropdownMenuItem(initialValue: d, child: Text(d.name ?? 'Unknown'))).toList(),
                 onChanged: (val) {
                   setState(() => _selectedDevice = val);
                 },

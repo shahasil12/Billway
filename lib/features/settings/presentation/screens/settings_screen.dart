@@ -178,7 +178,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           onPressed: state.isLoading ? null : _saveSettings,
                           style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                           child: state.isLoading 
-                              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurface, strokeWidth: 2))
+                              ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurface, strokeWidth: 2))
                               : const Text('Save Settings', style: TextStyle(fontSize: 16)),
                         ),
                       ],
