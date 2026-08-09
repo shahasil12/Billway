@@ -101,6 +101,8 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
   }
 
   void _submit() async {
+    if (_isLoading) return;
+
     if (_selectedCustomer == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a customer')));
       return;
@@ -122,6 +124,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
 
     final result = await ref.read(invoiceRepositoryProvider).createInvoice(invoice);
     
+    if (!mounted) return;
     setState(() => _isLoading = false);
 
     result.fold(
@@ -229,7 +232,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
               boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
             ),
             child: SafeArea(
@@ -251,7 +254,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _submit,
-                      child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Generate Invoice & Save', style: TextStyle(fontSize: 16)),
+                      child: _isLoading ? const CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurface) : const Text('Generate Invoice & Save', style: TextStyle(fontSize: 16)),
                     ),
                   ),
                 ],

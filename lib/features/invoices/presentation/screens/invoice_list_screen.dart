@@ -105,7 +105,7 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
                       return ListTile(
                         leading: CircleAvatar(
                           backgroundColor: invoice.status == 'PAID' ? Colors.green : Colors.orange,
-                          child: const Icon(Icons.receipt, color: Colors.white),
+                          child: Icon(Icons.receipt, color: Theme.of(context).colorScheme.onSurface),
                         ),
                         title: Text(invoice.customer?.name ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text('Invoice #${invoice.id} • ${invoice.paymentMethod}'),

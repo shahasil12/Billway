@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'core/router.dart';
 import 'core/providers.dart';
+import 'core/theme.dart';
 
 void main() {
   // Fire-and-forget warmup ping so Render wakes up before user navigates
@@ -36,20 +37,8 @@ class BillwayApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Billway POS',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.light,
-        ),
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       routerConfig: router,
       builder: (context, child) {
         if (authState.isLoading && authState.value == null) {

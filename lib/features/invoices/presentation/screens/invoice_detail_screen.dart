@@ -140,7 +140,7 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
             tooltip: 'Print',
           ),
           IconButton(
-            icon: _isDownloading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.download),
+            icon: _isDownloading ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurface, strokeWidth: 2)) : const Icon(Icons.download),
             onPressed: _isDownloading ? null : _downloadAndOpenPdf,
             tooltip: 'Download PDF',
           ),
@@ -416,7 +416,7 @@ class _RecordPaymentBottomSheetState extends ConsumerState<_RecordPaymentBottomS
             height: 50,
             child: ElevatedButton(
               onPressed: _isLoading ? null : _submit,
-              child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Save Payment'),
+              child: _isLoading ? const CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurface) : const Text('Save Payment'),
             ),
           ),
           const SizedBox(height: 24),

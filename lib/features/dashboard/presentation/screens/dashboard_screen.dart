@@ -22,12 +22,12 @@ class DashboardScreen extends ConsumerWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0F0F1A),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         drawer: _buildDrawer(context, ref),
         body: summaryAsync.when(
           data: (summary) => _buildBody(context, ref, summary, reportState, currency, user),
           loading: () => const Center(
-            child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+            child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
           ),
           error: (err, stack) => Center(
             child: Column(
@@ -37,12 +37,12 @@ class DashboardScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 Text('Error: $err',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white70)),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => ref.refresh(dashboardSummaryProvider),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6C63FF),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                   ),
                   child: const Text('Retry'),
                 ),
@@ -162,16 +162,16 @@ class DashboardScreen extends ConsumerWidget {
       expandedHeight: 160,
       floating: false,
       pinned: true,
-      backgroundColor: const Color(0xFF1A1A2E),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       surfaceTintColor: Colors.transparent,
-      iconTheme: const IconThemeData(color: Colors.white),
+      iconTheme: const IconThemeData(color: Theme.of(context).colorScheme.onSurface),
       actions: [
         IconButton(
-          icon: const Icon(Icons.notifications_outlined, color: Colors.white70),
+          icon: Icon(Icons.notifications_outlined, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
           onPressed: () {},
         ),
         IconButton(
-          icon: const Icon(Icons.logout_rounded, color: Colors.white70),
+          icon: Icon(Icons.logout_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
           tooltip: 'Logout',
           onPressed: () async {
             await ref.read(authStateProvider.notifier).logout();
@@ -186,7 +186,7 @@ class DashboardScreen extends ConsumerWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
+              colors: [Theme.of(context).colorScheme.surface, Color(0xFF16213E), Color(0xFF0F3460)],
             ),
           ),
           child: SafeArea(
@@ -213,16 +213,14 @@ class DashboardScreen extends ConsumerWidget {
                         children: [
                           Text(
                             greeting,
-                            style: const TextStyle(
-                              color: Colors.white54,
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.54),
                               fontSize: 13,
                               letterSpacing: 0.5,
                             ),
                           ),
                           Text(
                             user?.username ?? 'Admin',
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface,
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.3,
@@ -245,17 +243,14 @@ class DashboardScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A2E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Quick Actions',
-            style: TextStyle(
-              color: Colors.white70,
+          Text('Quick Actions', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               fontSize: 13,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.2,
@@ -270,7 +265,7 @@ class DashboardScreen extends ConsumerWidget {
                   icon: Icons.add_circle_rounded,
                   label: 'New Invoice',
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF6C63FF), Color(0xFF3ECFCF)],
+                    colors: [Theme.of(context).colorScheme.primary, Color(0xFF3ECFCF)],
                   ),
                   onTap: () => context.push('/invoices/create'),
                 ),
@@ -321,12 +316,11 @@ class DashboardScreen extends ConsumerWidget {
         ),
         child: Column(
           children: [
-            Icon(icon, color: Colors.white, size: 28),
+            Icon(icon, color: Theme.of(context).colorScheme.onSurface, size: 28),
             const SizedBox(height: 8),
             Text(
               label,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
@@ -363,12 +357,11 @@ class DashboardScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: Colors.white70, size: 24),
+            Icon(icon, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), size: 24),
             const SizedBox(height: 12),
             Text(
               value,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
               ),
@@ -376,8 +369,7 @@ class DashboardScreen extends ConsumerWidget {
             const SizedBox(height: 4),
             Text(
               title,
-              style: const TextStyle(
-                color: Colors.white70,
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -394,8 +386,7 @@ class DashboardScreen extends ConsumerWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface,
             fontSize: 18,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.3,
@@ -404,10 +395,7 @@ class DashboardScreen extends ConsumerWidget {
         if (onSeeAll != null)
           GestureDetector(
             onTap: onSeeAll,
-            child: const Text(
-              'See All →',
-              style: TextStyle(
-                color: Color(0xFF6C63FF),
+            child: Text('See All →', style: TextStyle(color: Theme.of(context).colorScheme.primary,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -424,24 +412,19 @@ class DashboardScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A2E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Sales Trend',
-            style: TextStyle(
-              color: Colors.white,
+          Text('Sales Trend', style: TextStyle(color: Theme.of(context).colorScheme.onSurface,
               fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const Text(
-            'Last 30 days',
-            style: TextStyle(color: Colors.white38, fontSize: 12),
+          Text('Last 30 days', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.38), fontSize: 12),
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -452,7 +435,7 @@ class DashboardScreen extends ConsumerWidget {
                   show: true,
                   drawVerticalLine: false,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: Colors.white10,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                     strokeWidth: 1,
                   ),
                 ),
@@ -467,7 +450,7 @@ class DashboardScreen extends ConsumerWidget {
                         .toList(),
                     isCurved: true,
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF6C63FF), Color(0xFF3ECFCF)],
+                      colors: [Theme.of(context).colorScheme.primary, Color(0xFF3ECFCF)],
                     ),
                     barWidth: 3,
                     isStrokeCapRound: true,
@@ -476,7 +459,7 @@ class DashboardScreen extends ConsumerWidget {
                       show: true,
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF6C63FF).withOpacity(0.25),
+                          Theme.of(context).colorScheme.primary.withOpacity(0.25),
                           Colors.transparent,
                         ],
                         begin: Alignment.topCenter,
@@ -501,9 +484,9 @@ class DashboardScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A2E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1)),
       ),
       child: Row(
         children: [
@@ -511,12 +494,10 @@ class DashboardScreen extends ConsumerWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: const Color(0xFF6C63FF).withOpacity(0.15),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              Icons.receipt_rounded,
-              color: Color(0xFF6C63FF),
+            child: Icon(Icons.receipt_rounded, color: Theme.of(context).colorScheme.primary,
               size: 22,
             ),
           ),
@@ -527,8 +508,7 @@ class DashboardScreen extends ConsumerWidget {
               children: [
                 Text(
                   invoice.customerName,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -536,7 +516,7 @@ class DashboardScreen extends ConsumerWidget {
                 const SizedBox(height: 3),
                 Text(
                   invoice.reference ?? 'Invoice #${invoice.id}',
-                  style: const TextStyle(color: Colors.white38, fontSize: 12),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.38), fontSize: 12),
                 ),
               ],
             ),
@@ -559,17 +539,17 @@ class DashboardScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(32),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A2E),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1)),
       ),
       child: Column(
         children: [
-          Icon(Icons.inbox_rounded, color: Colors.white24, size: 48),
+          Icon(Icons.inbox_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.24), size: 48),
           const SizedBox(height: 12),
           Text(
             message,
-            style: const TextStyle(color: Colors.white38, fontSize: 14),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.38), fontSize: 14),
           ),
         ],
       ),
@@ -578,7 +558,7 @@ class DashboardScreen extends ConsumerWidget {
 
   Widget _buildDrawer(BuildContext context, WidgetRef ref) {
     return Drawer(
-      backgroundColor: const Color(0xFF1A1A2E),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       child: SafeArea(
         child: Column(
           children: [
@@ -601,17 +581,17 @@ class DashboardScreen extends ConsumerWidget {
                     children: [
                       Text('Billway',
                           style: TextStyle(
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontSize: 22,
                               fontWeight: FontWeight.w800)),
                       Text('POS System',
-                          style: TextStyle(color: Colors.white38, fontSize: 12)),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.38), fontSize: 12)),
                     ],
                   ),
                 ],
               ),
             ),
-            const Divider(color: Colors.white10, height: 1),
+            const Divider(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1), height: 1),
             const SizedBox(height: 8),
             Expanded(
               child: ListView(
@@ -626,7 +606,7 @@ class DashboardScreen extends ConsumerWidget {
                   _buildDrawerItem(context, Icons.analytics_rounded, 'Reports', '/reports'),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Divider(color: Colors.white10),
+                    child: Divider(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1)),
                   ),
                   _buildDrawerItem(context, Icons.settings_rounded, 'Settings', '/settings'),
                 ],
@@ -669,11 +649,10 @@ class DashboardScreen extends ConsumerWidget {
   Widget _buildDrawerItem(
       BuildContext context, IconData icon, String label, String route) {
     return ListTile(
-      leading: Icon(icon, color: Colors.white60, size: 22),
+      leading: Icon(icon, color: Theme.of(context).colorScheme.onSurface60, size: 22),
       title: Text(
         label,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurface,
           fontSize: 15,
           fontWeight: FontWeight.w500,
         ),

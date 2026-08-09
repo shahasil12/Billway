@@ -75,7 +75,7 @@ class _PaymentListScreenState extends ConsumerState<PaymentListScreen> {
                       return ListTile(
                         leading: CircleAvatar(
                           backgroundColor: Colors.indigo,
-                          child: const Icon(Icons.payments, color: Colors.white),
+                          child: Icon(Icons.payments, color: Theme.of(context).colorScheme.onSurface),
                         ),
                         title: Text('Payment for Invoice #${payment.invoiceId}', style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text('$date\nMethod: ${payment.paymentMethod}${payment.referenceNumber != null ? ' (Ref: ${payment.referenceNumber})' : ''}'),
