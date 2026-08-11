@@ -6,6 +6,7 @@ import '../../../categories/presentation/controllers/category_list_controller.da
 import '../controllers/product_list_controller.dart';
 import '../../domain/entities/product.dart';
 import '../../../../core/providers.dart';
+import '../../../../core/widgets/barcode_scanner_screen.dart';
 
 class ProductFormWidget extends ConsumerStatefulWidget {
   final Product? initialProduct;
@@ -186,7 +187,26 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _barcodeController,
-            decoration: const InputDecoration(labelText: 'Barcode (Optional)', border: OutlineInputBorder(), suffixIcon: Icon(Icons.qr_code_scanner)),
+            decoration: InputDecoration(
+              labelText: 'Barcode (Optional)', 
+              border: const OutlineInputBorder(), 
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.qr_code_scanner),
+                onPressed: () async {
+                  final scannedCode = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const BarcodeScannerScreen(),
+                    ),
+                  );
+                  if (scannedCode != null && scannedCode is String) {
+                    setState(() {
+                      _barcodeController.text = scannedCode;
+                    });
+                  }
+                },
+              ),
+            ),
           ),
           const SizedBox(height: 16),
           TextFormField(

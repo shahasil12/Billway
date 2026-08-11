@@ -10,6 +10,7 @@ import '../../../customers/domain/entities/customer.dart';
 import '../../../products/domain/entities/product.dart';
 import '../controllers/invoice_list_controller.dart';
 import '../../../dashboard/presentation/controllers/dashboard_controller.dart';
+import '../../../../core/widgets/barcode_scanner_screen.dart';
 
 class CreateInvoiceScreen extends ConsumerStatefulWidget {
   const CreateInvoiceScreen({super.key});
@@ -76,6 +77,46 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
         );
       }
     );
+  }
+
+  void _handleScannedBarcode(String barcode) {
+    final products = ref.read(productListProvider).products;
+    try {
+      final product = products.firstWhere((p) => p.barcode == barcode && p.status);
+      if (product.stock < 1) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Not enough stock for ${product.name}')));
+        return;
+      }
+      
+      setState(() {
+        final existingIndex = _items.indexWhere((i) => i.productId == product.id);
+        if (existingIndex >= 0) {
+          final existing = _items[existingIndex];
+          if (existing.quantity + 1 > product.stock) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Not enough stock. Max: ${product.stock}')));
+            return;
+          }
+          _items[existingIndex] = InvoiceItem(
+            productId: existing.productId,
+            productName: existing.productName,
+            quantity: existing.quantity + 1,
+            unitPrice: existing.unitPrice,
+            taxPercentage: existing.taxPercentage,
+          );
+        } else {
+          _items.add(InvoiceItem(
+            productId: product.id!,
+            productName: product.name,
+            quantity: 1,
+            unitPrice: product.price,
+            taxPercentage: product.taxPercentage,
+          ));
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added ${product.name} to invoice')));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Product not found for barcode: $barcode')));
+    }
   }
 
   double get _calculatedSubtotal {
@@ -150,6 +191,22 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Invoice'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner),
+            onPressed: () async {
+              final scannedCode = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const BarcodeScannerScreen(),
+                ),
+              );
+              if (scannedCode != null && scannedCode is String) {
+                _handleScannedBarcode(scannedCode);
+              }
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
