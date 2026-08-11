@@ -47,14 +47,15 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
         actions: [
           IconButton(
             color: Colors.white,
-            icon: ValueListenableBuilder(
-              valueListenable: controller.torchState,
+            icon: ValueListenableBuilder<MobileScannerState>(
+              valueListenable: controller,
               builder: (context, state, child) {
-                switch (state) {
-                  case TorchState.off:
-                    return const Icon(Icons.flash_off, color: Colors.grey);
+                switch (state.torchState) {
                   case TorchState.on:
                     return const Icon(Icons.flash_on, color: Colors.yellow);
+                  case TorchState.off:
+                  default:
+                    return const Icon(Icons.flash_off, color: Colors.grey);
                 }
               },
             ),
@@ -63,13 +64,14 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
           ),
           IconButton(
             color: Colors.white,
-            icon: ValueListenableBuilder(
-              valueListenable: controller.cameraFacingState,
+            icon: ValueListenableBuilder<MobileScannerState>(
+              valueListenable: controller,
               builder: (context, state, child) {
-                switch (state) {
+                switch (state.cameraDirection) {
                   case CameraFacing.front:
                     return const Icon(Icons.camera_front);
                   case CameraFacing.back:
+                  default:
                     return const Icon(Icons.camera_rear);
                 }
               },
