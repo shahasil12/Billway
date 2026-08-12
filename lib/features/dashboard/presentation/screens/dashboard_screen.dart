@@ -26,7 +26,7 @@ class DashboardScreen extends ConsumerWidget {
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        drawer: _buildDrawer(context, ref),
+        drawer: _buildDrawer(context, ref, user),
         body: summaryAsync.when(
           data: (summary) => _buildBody(context, ref, summary, reportState, currency, user),
           loading: () => const Center(
@@ -66,7 +66,7 @@ class DashboardScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(20),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              _buildQuickActions(context),
+              _buildQuickActions(context, user),
               const SizedBox(height: 28),
               _buildSectionHeader(context, 'Today\'s Overview'),
               const SizedBox(height: 14),
@@ -242,7 +242,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuickActions(BuildContext context) {
+  Widget _buildQuickActions(BuildContext context, dynamic user) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -564,7 +564,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDrawer(BuildContext context, WidgetRef ref) {
+  Widget _buildDrawer(BuildContext context, WidgetRef ref, dynamic user) {
     return Drawer(
       backgroundColor: Theme.of(context).colorScheme.surface,
       child: SafeArea(
