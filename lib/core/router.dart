@@ -30,6 +30,7 @@ import '../features/payments/presentation/screens/payment_list_screen.dart';
 import '../features/reports/presentation/screens/reports_screen.dart';
 
 import '../features/settings/presentation/screens/settings_screen.dart';
+import '../features/auth/presentation/screens/manage_users_screen.dart';
 
 CustomTransitionPage _fadeTransition(Widget child, GoRouterState state) {
   return CustomTransitionPage(
@@ -166,6 +167,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         pageBuilder: (context, state) => _fadeTransition(const SettingsScreen(), state),
+      ),
+      GoRoute(
+        path: '/settings/users',
+        pageBuilder: (context, state) => _fadeTransition(const ManageUsersScreen(), state),
       ),
     ],
   );

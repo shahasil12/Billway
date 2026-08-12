@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import '../features/auth/data/repositories/user_management_repository.dart';
+import '../features/auth/presentation/controllers/user_management_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'network/api_client.dart';
@@ -62,6 +64,15 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 final authStateProvider = StateNotifierProvider<AuthController, AsyncValue<User?>>((ref) {
   return AuthController(ref.read(authRepositoryProvider));
+});
+
+
+final userManagementRepositoryProvider = Provider<UserManagementRepository>((ref) {
+  return UserManagementRepository(ref.read(dioProvider));
+});
+
+final userManagementControllerProvider = StateNotifierProvider<UserManagementController, AsyncValue<List<User>>>((ref) {
+  return UserManagementController(ref.read(userManagementRepositoryProvider));
 });
 
 

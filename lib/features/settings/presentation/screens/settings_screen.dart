@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/settings_controller.dart';
 import '../../domain/entities/settings.dart';
 
+import 'package:go_router/go_router.dart';
+import '../../../../core/providers.dart';
+import '../../../auth/domain/entities/user.dart';
+
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -86,6 +90,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(settingsProvider);
+    final user = ref.watch(authStateProvider).value;
 
     ref.listen<SettingsState>(settingsProvider, (previous, next) {
       if (previous?.isLoading == true && next.isLoading == false && next.settings != null) {
@@ -112,6 +117,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        if (user?.role == UserRole.admin) ...[
+                          const Text('Administration', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 12),
+                          Card(
+                            margin: EdgeInsets.zero,
+                            child: ListTile(
+                              leading: const Icon(Icons.people, color: Color(0xFFFF2A5F)),
+                              title: const Text('Manage Users & Roles'),
+                              subtitle: const Text('Add cashiers, managers, and admins'),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () => context.push('/settings/users'),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                        ],
                         const Text('Company Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 16),
                         TextFormField(
