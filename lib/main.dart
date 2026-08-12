@@ -27,14 +27,6 @@ class BillwayApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       routerConfig: router,
-      builder: (context, child) {
-        if (authState.isLoading && authState.value == null) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        return child!;
-      },
     );
   }
 }

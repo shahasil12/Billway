@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Premium Color Palette
-  static const Color primaryColor = Color(0xFF4F46E5); // Indigo
-  static const Color secondaryColor = Color(0xFF10B981); // Emerald
-  static const Color scaffoldLight = Color(0xFFF8FAFC); // Slate 50
-  static const Color scaffoldDark = Color(0xFF0F172A); // Slate 900
+  // Premium Vibrant Color Palette
+  static const Color primaryColor = Color(0xFFFF2A5F); // Neon Rose
+  static const Color secondaryColor = Color(0xFF6B48FF); // Electric Purple
+  static const Color scaffoldLight = Color(0xFFF9F9FB); 
+  static const Color scaffoldDark = Color(0xFF0F0F1A); // Deep Space
   static const Color surfaceLight = Colors.white;
-  static const Color surfaceDark = Color(0xFF1E293B); // Slate 800
-  static const Color textLight = Color(0xFF334155); // Slate 700
-  static const Color textDark = Color(0xFFF1F5F9); // Slate 100
+  static const Color surfaceDark = Color(0xFF1B1B29); // Space Grey
+  static const Color textLight = Color(0xFF2D2D3F); 
+  static const Color textDark = Color(0xFFF1F1F6);
 
   static ThemeData get lightTheme {
     return ThemeData(
