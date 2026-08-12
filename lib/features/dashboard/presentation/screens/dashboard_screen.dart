@@ -7,7 +7,10 @@ import '../../../../core/providers.dart';
 import '../../../reports/presentation/controllers/report_controller.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../domain/entities/dashboard_summary.dart';
+import '../../../../features/auth/domain/entities/user.dart';
 import '../controllers/dashboard_controller.dart';
+
+import '../../../../core/widgets/hover_scale.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -269,30 +272,32 @@ class DashboardScreen extends ConsumerWidget {
                   onTap: () => context.push('/invoices/create'),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildActionButton(
-                  context,
-                  icon: Icons.person_add_rounded,
-                  label: 'Add Customer',
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
+              if (user?.role != UserRole.cashier) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildActionButton(
+                    context,
+                    icon: Icons.person_add_rounded,
+                    label: 'Add Customer',
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
+                    ),
+                    onTap: () => context.push('/customers/add'),
                   ),
-                  onTap: () => context.push('/customers/add'),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildActionButton(
-                  context,
-                  icon: Icons.inventory_2_rounded,
-                  label: 'Add Product',
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildActionButton(
+                    context,
+                    icon: Icons.inventory_2_rounded,
+                    label: 'Add Product',
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
+                    ),
+                    onTap: () => context.push('/products/add'),
                   ),
-                  onTap: () => context.push('/products/add'),
                 ),
-              ),
+              ],
             ],
           ),
         ],
@@ -305,27 +310,29 @@ class DashboardScreen extends ConsumerWidget {
       required String label,
       required Gradient gradient,
       required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: Theme.of(context).colorScheme.onSurface, size: 28),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
+    return HoverScale(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: Theme.of(context).colorScheme.onSurface, size: 28),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -338,42 +345,45 @@ class DashboardScreen extends ConsumerWidget {
     required Gradient gradient,
     VoidCallback? onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), size: 24),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
+    return HoverScale(
+      scale: 1.03,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), size: 24),
+              const SizedBox(height: 12),
+              Text(
+                value,
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                title,
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -601,12 +611,19 @@ class DashboardScreen extends ConsumerWidget {
                   _buildDrawerItem(context, Icons.category_rounded, 'Categories', '/categories'),
                   _buildDrawerItem(context, Icons.receipt_long_rounded, 'Invoices', '/invoices'),
                   _buildDrawerItem(context, Icons.payments_rounded, 'Payments', '/payments'),
-                  _buildDrawerItem(context, Icons.analytics_rounded, 'Reports', '/reports'),
+                  
+                  // Hide Reports from Cashier
+                  if (user?.role != UserRole.cashier)
+                    _buildDrawerItem(context, Icons.analytics_rounded, 'Reports', '/reports'),
+                    
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     child: Divider(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1)),
                   ),
-                  _buildDrawerItem(context, Icons.settings_rounded, 'Settings', '/settings'),
+                  
+                  // Hide Settings from Cashier and Manager
+                  if (user?.role == UserRole.admin)
+                    _buildDrawerItem(context, Icons.settings_rounded, 'Settings', '/settings'),
                 ],
               ),
             ),

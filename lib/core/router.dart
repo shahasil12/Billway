@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/home_screen.dart';
+import '../features/auth/presentation/screens/splash_screen.dart';
 
 import '../features/customers/presentation/screens/customer_list_screen.dart';
 import '../features/customers/presentation/screens/add_edit_customer_screen.dart';
@@ -30,11 +31,25 @@ import '../features/reports/presentation/screens/reports_screen.dart';
 
 import '../features/settings/presentation/screens/settings_screen.dart';
 
+CustomTransitionPage _fadeTransition(Widget child, GoRouterState state) {
+  return CustomTransitionPage(
+    key: state.pageKey,
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: CurveTween(curve: Curves.easeInOutCirc).animate(animation),
+        child: child,
+      );
+    },
+  );
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/splash',
     redirect: (context, state) {
       final isLoggingIn = state.uri.path == '/login';
+      final isSplash = state.uri.path == '/splash';
       final authState = ref.read(authStateProvider);
       
       if (authState.isLoading) {
@@ -43,11 +58,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       
       final isAuthenticated = authState.value != null;
       
-      if (!isAuthenticated && !isLoggingIn) {
+      if (!isAuthenticated && !isLoggingIn && !isSplash) {
         return '/login';
       }
       
-      if (isAuthenticated && isLoggingIn) {
+      if (isAuthenticated && (isLoggingIn || isSplash)) {
         return '/';
       }
       
@@ -55,98 +70,102 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(
+        path: '/splash',
+        pageBuilder: (context, state) => _fadeTransition(const SplashScreen(), state),
+      ),
+      GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginScreen(),
+        pageBuilder: (context, state) => _fadeTransition(const LoginScreen(), state),
       ),
       GoRoute(
         path: '/',
-        builder: (context, state) => const HomeScreen(),
+        pageBuilder: (context, state) => _fadeTransition(const HomeScreen(), state),
       ),
       GoRoute(
         path: '/customers',
-        builder: (context, state) => const CustomerListScreen(),
+        pageBuilder: (context, state) => _fadeTransition(const CustomerListScreen(), state),
       ),
       GoRoute(
         path: '/customers/add',
-        builder: (context, state) => const AddEditCustomerScreen(),
+        pageBuilder: (context, state) => _fadeTransition(const AddEditCustomerScreen(), state),
       ),
       GoRoute(
         path: '/customers/edit',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final customer = state.extra as Customer;
-          return AddEditCustomerScreen(customer: customer);
+          return _fadeTransition(AddEditCustomerScreen(customer: customer), state);
         },
       ),
       GoRoute(
         path: '/customers/:id',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final id = int.parse(state.pathParameters['id']!);
-          return CustomerDetailScreen(customerId: id);
+          return _fadeTransition(CustomerDetailScreen(customerId: id), state);
         },
       ),
       GoRoute(
         path: '/categories',
-        builder: (context, state) => const CategoryListScreen(),
+        pageBuilder: (context, state) => _fadeTransition(const CategoryListScreen(), state),
       ),
       GoRoute(
         path: '/categories/add',
-        builder: (context, state) => const AddEditCategoryScreen(),
+        pageBuilder: (context, state) => _fadeTransition(const AddEditCategoryScreen(), state),
       ),
       GoRoute(
         path: '/categories/edit',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final category = state.extra as Category;
-          return AddEditCategoryScreen(category: category);
+          return _fadeTransition(AddEditCategoryScreen(category: category), state);
         },
       ),
       GoRoute(
         path: '/products',
-        builder: (context, state) => const ProductListScreen(),
+        pageBuilder: (context, state) => _fadeTransition(const ProductListScreen(), state),
       ),
       GoRoute(
         path: '/products/add',
-        builder: (context, state) => const AddEditProductScreen(),
+        pageBuilder: (context, state) => _fadeTransition(const AddEditProductScreen(), state),
       ),
       GoRoute(
         path: '/products/edit',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final product = state.extra as Product;
-          return AddEditProductScreen(product: product);
+          return _fadeTransition(AddEditProductScreen(product: product), state);
         },
       ),
       GoRoute(
         path: '/products/:id',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final product = state.extra as Product;
-          return ProductDetailScreen(product: product);
+          return _fadeTransition(ProductDetailScreen(product: product), state);
         },
       ),
       GoRoute(
         path: '/invoices',
-        builder: (context, state) => const InvoiceListScreen(),
+        pageBuilder: (context, state) => _fadeTransition(const InvoiceListScreen(), state),
       ),
       GoRoute(
         path: '/invoices/create',
-        builder: (context, state) => const CreateInvoiceScreen(),
+        pageBuilder: (context, state) => _fadeTransition(const CreateInvoiceScreen(), state),
       ),
       GoRoute(
         path: '/invoices/:id',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final invoice = state.extra as Invoice;
-          return InvoiceDetailScreen(invoice: invoice);
+          return _fadeTransition(InvoiceDetailScreen(invoice: invoice), state);
         },
       ),
       GoRoute(
         path: '/payments',
-        builder: (context, state) => const PaymentListScreen(),
+        pageBuilder: (context, state) => _fadeTransition(const PaymentListScreen(), state),
       ),
       GoRoute(
         path: '/reports',
-        builder: (context, state) => const ReportsScreen(),
+        pageBuilder: (context, state) => _fadeTransition(const ReportsScreen(), state),
       ),
       GoRoute(
         path: '/settings',
-        builder: (context, state) => const SettingsScreen(),
+        pageBuilder: (context, state) => _fadeTransition(const SettingsScreen(), state),
       ),
     ],
   );
