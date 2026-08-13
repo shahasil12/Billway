@@ -219,7 +219,12 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                 if (product.image != null)
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.p12)),
-                    child: Image.network(product.image!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _buildPlaceholder()),
+                    child: Image.network(
+                      // Cache-bust with product ID to force reload after edits
+                      '${product.image!}?v=${product.id}',
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                    ),
                   )
                 else
                   _buildPlaceholder(),

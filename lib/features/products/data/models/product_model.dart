@@ -26,7 +26,7 @@ class ProductModel extends Product {
       taxPercentage: double.parse((json['tax_percentage'] ?? 0.0).toString()),
       barcode: json['barcode'],
       description: json['description'],
-      image: json['image'],
+      image: json['image_url'] ?? json['image'], // prefer full URL
       stock: json['stock'] ?? 0,
       status: json['status'] ?? true,
       createdAt: json['created_at'],

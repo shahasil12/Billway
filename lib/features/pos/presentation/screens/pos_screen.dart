@@ -32,6 +32,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   int? _selectedCategoryId;
   final TextEditingController _searchController = TextEditingController();
 
+  bool _dialogShown = false;
+
   @override
   void initState() {
     super.initState();
@@ -39,7 +41,18 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       ref.read(productListProvider.notifier).fetchProducts();
       ref.read(categoryListProvider.notifier).fetchCategories();
       ref.read(customerListProvider.notifier).fetchCustomers();
+      _checkSession();
     });
+  }
+
+  void _checkSession() {
+    final sessionState = ref.read(posSessionControllerProvider);
+    if (!sessionState.isLoading && sessionState.session == null && !_dialogShown) {
+      _dialogShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showOpenSessionDialog();
+      });
+    }
   }
 
   void _showOpenSessionDialog() {
@@ -199,12 +212,13 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     final categoriesState = ref.watch(categoryListProvider);
     final isTablet = MediaQuery.of(context).size.width >= 600;
 
-    ref.listen<POSSessionState>(posSessionControllerProvider, (previous, next) {
-      final wasLoading = previous?.isLoading ?? true;
-      if (wasLoading && !next.isLoading && next.session == null) {
-        _showOpenSessionDialog();
-      }
-    });
+    // When session check finishes and no session found, show dialog once
+    if (!sessionState.isLoading && sessionState.session == null && !_dialogShown) {
+      _dialogShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showOpenSessionDialog();
+      });
+    }
 
     if (sessionState.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -223,7 +237,10 @@ class _POSScreenState extends ConsumerState<POSScreen> {
               const SizedBox(height: AppSpacing.p24),
               PrimaryButton(
                 label: 'Open Session',
-                onPressed: _showOpenSessionDialog,
+                onPressed: () {
+                  _dialogShown = false;
+                  _showOpenSessionDialog();
+                },
               ),
             ],
           ),
@@ -232,11 +249,12 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     }
 
     final products = productsState.products;
-    final filteredProducts = _selectedCategoryId == null 
-        ? products 
+    final filteredProducts = _selectedCategoryId == null
+        ? products
         : products.where((p) => p.categoryId == _selectedCategoryId).toList();
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Point of Sale'),
         actions: [
@@ -249,9 +267,14 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           )
         ],
       ),
-      body: isTablet ? _buildTabletLayout(filteredProducts, cartState, categoriesState.categories) : _buildPhoneLayout(filteredProducts, cartState, categoriesState.categories),
+      body: SafeArea(
+        child: isTablet
+            ? _buildTabletLayout(filteredProducts, cartState, categoriesState.categories)
+            : _buildPhoneLayout(filteredProducts, cartState, categoriesState.categories),
+      ),
     );
   }
+
 
   Widget _buildTabletLayout(List<Product> products, POSCartState cartState, List<dynamic> categories) {
     return Row(
