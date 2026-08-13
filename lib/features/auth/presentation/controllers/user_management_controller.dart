@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/user.dart';
-import '../data/repositories/user_management_repository.dart';
+import '../../data/repositories/user_management_repository.dart';
 
 class UserManagementController extends StateNotifier<AsyncValue<List<User>>> {
   final UserManagementRepository _repository;

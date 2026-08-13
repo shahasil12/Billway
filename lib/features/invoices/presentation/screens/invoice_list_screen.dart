@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:async';
+
 import '../../../../core/providers.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../controllers/invoice_list_controller.dart';
-import 'dart:async';
+
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_inputs.dart';
+import '../../../../core/widgets/app_containers.dart';
+import '../../../../core/widgets/app_buttons.dart';
 
 class InvoiceListScreen extends ConsumerStatefulWidget {
   const InvoiceListScreen({super.key});
@@ -49,85 +57,142 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(invoiceListProvider);
     final currency = ref.watch(settingsProvider).settings?.currency ?? '\$';
-
-    ref.listen<InvoiceListState>(invoiceListProvider, (previous, next) {
-      if (next.error != null && next.error != previous?.error) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(next.error!)));
-      }
-    });
+    final isTablet = MediaQuery.of(context).size.width >= 600;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Invoices'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.p16),
+            child: PrimaryButton(
+              label: 'New Invoice',
+              onPressed: () => context.push('/invoices/create'),
+            ),
+          )
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-            child: TextField(
+            padding: EdgeInsets.symmetric(
+              horizontal: isTablet ? AppSpacing.p32 : AppSpacing.p16,
+              vertical: AppSpacing.p8,
+            ),
+            child: SearchField(
               controller: _searchController,
               onChanged: _onSearchChanged,
-              decoration: InputDecoration(
-                hintText: 'Search by customer name...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-              ),
+              hint: 'Search by invoice # or customer...',
             ),
           ),
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: () => ref.read(invoiceListProvider.notifier).fetchInvoices(isRefresh: true),
-        child: state.invoices.isEmpty && state.isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : state.invoices.isEmpty
-                ? ListView(
-                    children: const [
-                      SizedBox(height: 100),
-                      Center(child: Text('No invoices found.')),
-                    ],
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    itemCount: state.invoices.length + (state.hasMore ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == state.invoices.length) {
-                        return const Center(child: Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: CircularProgressIndicator(),
-                        ));
-                      }
-                      final invoice = state.invoices[index];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: invoice.status == 'PAID' ? Colors.green : Colors.orange,
-                          child: Icon(Icons.receipt, color: Theme.of(context).colorScheme.onSurface),
-                        ),
-                        title: Text(invoice.customer?.name ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('Invoice #${invoice.id} • ${invoice.paymentMethod}'),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text('$currency${invoice.grandTotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            Text(invoice.status, style: TextStyle(color: invoice.status == 'PAID' ? Colors.green : Colors.orange, fontSize: 12)),
-                          ],
-                        ),
-                        onTap: () => context.push('/invoices/${invoice.id}', extra: invoice),
-                      );
-                    },
-                  ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          context.push('/invoices/create');
+      body: _buildBody(context, state, currency, isTablet),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, InvoiceListState state, String currency, bool isTablet) {
+    if (state.isLoading && state.invoices.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state.error != null && state.invoices.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: AppColors.error, size: 48),
+            const SizedBox(height: AppSpacing.p16),
+            Text(state.error!, style: const TextStyle(color: AppColors.error)),
+            const SizedBox(height: AppSpacing.p16),
+            SizedBox(
+              width: 120,
+              child: PrimaryButton(
+                label: 'Retry',
+                onPressed: () => ref.read(invoiceListProvider.notifier).fetchInvoices(isRefresh: true),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (state.invoices.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.receipt_long_outlined, size: 64, color: AppColors.textDisabled),
+            const SizedBox(height: AppSpacing.p16),
+            const Text('No invoices found', style: TextStyle(color: AppColors.textSecondary)),
+            const SizedBox(height: AppSpacing.p24),
+            SizedBox(
+              width: 200,
+              child: PrimaryButton(
+                label: 'Create First Invoice',
+                onPressed: () => context.push('/invoices/create'),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => ref.read(invoiceListProvider.notifier).fetchInvoices(isRefresh: true),
+      child: ListView.builder(
+        controller: _scrollController,
+        padding: EdgeInsets.symmetric(
+          horizontal: isTablet ? AppSpacing.p32 : 0,
+          vertical: AppSpacing.p16,
+        ),
+        itemCount: state.invoices.length + (state.hasMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == state.invoices.length) {
+            return const Padding(
+              padding: EdgeInsets.all(AppSpacing.p16),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          final invoice = state.invoices[index];
+          
+          final row = ListRow(
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(AppSpacing.p8),
+              ),
+              child: const Icon(Icons.receipt, color: AppColors.primary),
+            ),
+            title: invoice.customer?.name ?? 'Unknown Customer',
+            subtitle: 'Invoice #${invoice.id} • ${invoice.paymentMethod}',
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '$currency${invoice.grandTotal.toStringAsFixed(2)}',
+                  style: AppTextStyles.financialLine.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                StatusChip(
+                  label: invoice.status,
+                  status: invoice.status == 'PAID' ? StatusType.success : StatusType.warning,
+                ),
+              ],
+            ),
+            onTap: () => context.push('/invoices/${invoice.id}', extra: invoice),
+          );
+
+          if (isTablet) {
+            return AppCard(
+              padding: EdgeInsets.zero,
+              child: row,
+            );
+          }
+          return row;
         },
-        icon: const Icon(Icons.add),
-        label: const Text('New Invoice'),
       ),
     );
   }

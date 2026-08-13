@@ -31,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       final response = await Dio().get(
         'https://billway-api-a9ea.onrender.com/api/auth/login/',
         options: Options(
-          validateStatus: (_) => true,
+          validateStatus: (status) => status != null && status < 500,
           receiveTimeout: const Duration(seconds: 120),
         ),
       );

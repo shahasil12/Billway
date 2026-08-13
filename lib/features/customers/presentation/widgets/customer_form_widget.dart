@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/customer.dart';
+import '../../../../core/widgets/app_inputs.dart';
+import '../../../../core/widgets/app_buttons.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class CustomerFormWidget extends StatefulWidget {
   final Customer? initialCustomer;
@@ -56,17 +60,17 @@ class _CustomerFormWidgetState extends State<CustomerFormWidget> {
     return Form(
       key: _formKey,
       child: ListView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppSpacing.p24),
         children: [
-          TextFormField(
+          AppTextField(
+            label: 'Full Name *',
             controller: _nameController,
-            decoration: const InputDecoration(labelText: 'Full Name *', border: OutlineInputBorder()),
             validator: (value) => value == null || value.isEmpty ? 'Name is required' : null,
           ),
-          const SizedBox(height: 16),
-          TextFormField(
+          const SizedBox(height: AppSpacing.p16),
+          AppTextField(
+            label: 'Email',
             controller: _emailController,
-            decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
             keyboardType: TextInputType.emailAddress,
             validator: (value) {
               if (value != null && value.isNotEmpty) {
@@ -76,26 +80,30 @@ class _CustomerFormWidgetState extends State<CustomerFormWidget> {
               return null;
             },
           ),
-          const SizedBox(height: 16),
-          TextFormField(
+          const SizedBox(height: AppSpacing.p16),
+          AppTextField(
+            label: 'Phone *',
             controller: _phoneController,
-            decoration: const InputDecoration(labelText: 'Phone', border: OutlineInputBorder()),
             keyboardType: TextInputType.phone,
             validator: (value) {
-              if (value != null && value.isNotEmpty && value.length < 10) {
+              if (value == null || value.isEmpty) {
+                return 'Phone number is required';
+              }
+              if (value.length < 10) {
                 return 'Phone number must be at least 10 digits';
               }
               return null;
             },
           ),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: widget.isLoading ? null : _submit,
-            style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16)),
-            child: widget.isLoading 
-                ? const CircularProgressIndicator()
-                : Text(widget.initialCustomer == null ? 'Create Customer' : 'Update Customer'),
-          ),
+          const SizedBox(height: AppSpacing.p32),
+          if (widget.isLoading)
+            const Center(child: CircularProgressIndicator())
+          else
+            PrimaryButton(
+              isLarge: true,
+              label: widget.initialCustomer == null ? 'Create Customer' : 'Update Customer',
+              onPressed: _submit,
+            ),
         ],
       ),
     );

@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../controllers/customer_list_controller.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_inputs.dart';
+import '../../../../core/widgets/app_containers.dart';
+import '../../../../core/widgets/app_buttons.dart';
 import 'dart:async';
 
 class CustomerListScreen extends ConsumerStatefulWidget {
@@ -46,106 +51,129 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(customerListProvider);
-
-    ref.listen<CustomerListState>(customerListProvider, (previous, next) {
-      if (next.error != null && next.error != previous?.error) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(next.error!)));
-      }
-    });
+    final isTablet = MediaQuery.of(context).size.width >= 600;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Customers'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.p16),
+            child: PrimaryButton(
+              label: 'Add Customer',
+              onPressed: () => context.push('/customers/add'),
+            ),
+          )
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
+            padding: EdgeInsets.symmetric(
+              horizontal: isTablet ? AppSpacing.p32 : AppSpacing.p16,
+              vertical: AppSpacing.p8,
+            ),
+            child: SearchField(
               controller: _searchController,
               onChanged: _onSearchChanged,
-              decoration: InputDecoration(
-                hintText: 'Search customers...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-              ),
+              hint: 'Search customers by name or phone...',
             ),
           ),
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: () => ref.read(customerListProvider.notifier).fetchCustomers(isRefresh: true),
-        child: state.customers.isEmpty && state.isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : state.customers.isEmpty
-                ? ListView(
-                    children: const [
-                      SizedBox(height: 100),
-                      Center(child: Text('No customers found.')),
-                    ],
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    itemCount: state.customers.length + (state.hasMore ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == state.customers.length) {
-                        return const Center(child: Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: CircularProgressIndicator(),
-                        ));
-                      }
-                      final customer = state.customers[index];
-                      return Dismissible(
-                        key: ValueKey(customer.id),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          color: Colors.red,
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 20),
-                          child: Icon(Icons.delete, color: Theme.of(context).colorScheme.onSurface),
-                        ),
-                        confirmDismiss: (direction) async {
-                          return await showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text("Confirm"),
-                                content: const Text("Are you sure you wish to delete this customer?"),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text("CANCEL")),
-                                  TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text("DELETE")),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                        onDismissed: (direction) {
-                          ref.read(customerListProvider.notifier).deleteCustomer(customer.id!);
-                        },
-                        child: ListTile(
-                          title: Text(customer.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text('${customer.email ?? ''} • ${customer.phone ?? ''}'),
-                          onTap: () {
-                            context.push('/customers/${customer.id}');
-                          },
-                          trailing: IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () => context.push('/customers/edit', extra: customer),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.push('/customers/add');
+      body: _buildBody(context, state, isTablet),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, CustomerListState state, bool isTablet) {
+    if (state.isLoading && state.customers.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state.error != null && state.customers.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: AppColors.error, size: 48),
+            const SizedBox(height: AppSpacing.p16),
+            Text(state.error!, style: const TextStyle(color: AppColors.error)),
+            const SizedBox(height: AppSpacing.p16),
+            SizedBox(
+              width: 120,
+              child: PrimaryButton(
+                label: 'Retry',
+                onPressed: () => ref.read(customerListProvider.notifier).fetchCustomers(isRefresh: true),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (state.customers.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.people_outline, size: 64, color: AppColors.textDisabled),
+            const SizedBox(height: AppSpacing.p16),
+            const Text('No customers yet', style: TextStyle(color: AppColors.textSecondary)),
+            const SizedBox(height: AppSpacing.p24),
+            SizedBox(
+              width: 200,
+              child: PrimaryButton(
+                label: 'Add First Customer',
+                onPressed: () => context.push('/customers/add'),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => ref.read(customerListProvider.notifier).fetchCustomers(isRefresh: true),
+      child: ListView.builder(
+        controller: _scrollController,
+        padding: EdgeInsets.symmetric(
+          horizontal: isTablet ? AppSpacing.p32 : 0,
+          vertical: AppSpacing.p16,
+        ),
+        itemCount: state.customers.length + (state.hasMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == state.customers.length) {
+            return const Padding(
+              padding: EdgeInsets.all(AppSpacing.p16),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          final customer = state.customers[index];
+          
+          final row = ListRow(
+            leading: CircleAvatar(
+              backgroundColor: AppColors.primaryLight,
+              child: Text(
+                customer.name.substring(0, 1).toUpperCase(),
+                style: const TextStyle(color: AppColors.primary),
+              ),
+            ),
+            title: customer.name,
+            subtitle: customer.phone ?? customer.email ?? 'No contact info',
+            trailing: IconButton(
+              icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary),
+              onPressed: () => context.push('/customers/edit', extra: customer),
+            ),
+            onTap: () => context.push('/customers/${customer.id}'),
+          );
+
+          if (isTablet) {
+            return AppCard(
+              padding: EdgeInsets.zero,
+              child: row,
+            );
+          }
+          return row;
         },
-        child: const Icon(Icons.add),
       ),
     );
   }

@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
 import '../controllers/settings_controller.dart';
 import '../../domain/entities/settings.dart';
-
-import 'package:go_router/go_router.dart';
 import '../../../../core/providers.dart';
 import '../../../auth/domain/entities/user.dart';
+
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_inputs.dart';
+import '../../../../core/widgets/app_buttons.dart';
+import '../../../../core/widgets/app_containers.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -82,7 +89,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final success = await ref.read(settingsProvider.notifier).updateSettings(updatedSettings);
       
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings updated successfully')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Settings updated successfully'),
+            backgroundColor: AppColors.success,
+          )
+        );
       }
     }
   }
@@ -91,6 +103,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(settingsProvider);
     final user = ref.watch(authStateProvider).value;
+    final isTablet = MediaQuery.of(context).size.width >= 600;
 
     ref.listen<SettingsState>(settingsProvider, (previous, next) {
       if (previous?.isLoading == true && next.isLoading == false && next.settings != null) {
@@ -104,103 +117,140 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Business Settings'),
+        title: const Text('Settings'),
       ),
       body: state.isLoading && state.settings == null
           ? const Center(child: CircularProgressIndicator())
           : state.error != null && state.settings == null
-              ? Center(child: Text(state.error!, style: const TextStyle(color: Colors.red)))
+              ? Center(child: Text(state.error!, style: const TextStyle(color: AppColors.error)))
               : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTablet ? AppSpacing.p32 : AppSpacing.p16,
+                    vertical: AppSpacing.p16,
+                  ),
                   child: Form(
                     key: _formKey,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (user?.role == UserRole.admin) ...[
-                          const Text('Administration', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 12),
-                          Card(
-                            margin: EdgeInsets.zero,
+                          Text('Administration', style: AppTextStyles.h3),
+                          const SizedBox(height: AppSpacing.p16),
+                          AppCard(
+                            padding: EdgeInsets.zero,
                             child: ListTile(
-                              leading: const Icon(Icons.people, color: Color(0xFFFF2A5F)),
-                              title: const Text('Manage Users & Roles'),
-                              subtitle: const Text('Add cashiers, managers, and admins'),
-                              trailing: const Icon(Icons.chevron_right),
+                              leading: Container(
+                                padding: const EdgeInsets.all(AppSpacing.p8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.people, color: AppColors.primary),
+                              ),
+                              title: Text('Manage Users & Roles', style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
+                              subtitle: Text('Add cashiers, managers, and admins', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                              trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
                               onTap: () => context.push('/settings/users'),
                             ),
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: AppSpacing.p32),
                         ],
-                        const Text('Company Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _nameController,
-                          decoration: const InputDecoration(labelText: 'Business Name', border: OutlineInputBorder()),
-                          validator: (value) => value == null || value.isEmpty ? 'Required' : null,
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _addressController,
-                          decoration: const InputDecoration(labelText: 'Business Address', border: OutlineInputBorder()),
-                          maxLines: 3,
-                          validator: (value) => value == null || value.isEmpty ? 'Required' : null,
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _phoneController,
-                          decoration: const InputDecoration(labelText: 'Phone Number', border: OutlineInputBorder()),
-                          validator: (value) => value == null || value.isEmpty ? 'Required' : null,
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _gstController,
-                          decoration: const InputDecoration(labelText: 'GST Number (Optional)', border: OutlineInputBorder()),
-                        ),
-                        const SizedBox(height: 32),
-                        const Text('Invoice Preferences', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: _prefixController,
-                                decoration: const InputDecoration(labelText: 'Invoice Prefix', border: OutlineInputBorder()),
+                        
+                        Text('Company Details', style: AppTextStyles.h3),
+                        const SizedBox(height: AppSpacing.p16),
+                        AppCard(
+                          child: Column(
+                            children: [
+                              AppTextField(
+                                controller: _nameController,
+                                label: 'Business Name *',
                                 validator: (value) => value == null || value.isEmpty ? 'Required' : null,
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: TextFormField(
-                                controller: _currencyController,
-                                decoration: const InputDecoration(labelText: 'Currency Symbol', border: OutlineInputBorder()),
+                              const SizedBox(height: AppSpacing.p16),
+                              AppTextField(
+                                controller: _addressController,
+                                label: 'Business Address *',
+                                maxLines: 3,
                                 validator: (value) => value == null || value.isEmpty ? 'Required' : null,
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: AppSpacing.p16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: AppTextField(
+                                      controller: _phoneController,
+                                      label: 'Phone Number *',
+                                      validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.p16),
+                                  Expanded(
+                                    child: AppTextField(
+                                      controller: _gstController,
+                                      label: 'GST Number (Optional)',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _taxController,
-                          decoration: const InputDecoration(labelText: 'Default Tax Percentage (%)', border: OutlineInputBorder()),
-                          keyboardType: TextInputType.number,
-                          validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                        
+                        const SizedBox(height: AppSpacing.p32),
+                        Text('Invoice Preferences', style: AppTextStyles.h3),
+                        const SizedBox(height: AppSpacing.p16),
+                        
+                        AppCard(
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: AppTextField(
+                                      controller: _prefixController,
+                                      label: 'Invoice Prefix *',
+                                      validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.p16),
+                                  Expanded(
+                                    child: AppTextField(
+                                      controller: _currencyController,
+                                      label: 'Currency Symbol *',
+                                      validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppSpacing.p16),
+                              AppTextField(
+                                controller: _taxController,
+                                label: 'Default Tax Percentage (%) *',
+                                keyboardType: TextInputType.number,
+                                validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                              ),
+                              const SizedBox(height: AppSpacing.p16),
+                              AppTextField(
+                                controller: _footerController,
+                                label: 'Invoice Footer Note *',
+                                maxLines: 2,
+                                validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _footerController,
-                          decoration: const InputDecoration(labelText: 'Invoice Footer Note', border: OutlineInputBorder()),
-                          maxLines: 2,
-                          validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                        
+                        const SizedBox(height: AppSpacing.p32),
+                        SizedBox(
+                          width: double.infinity,
+                          child: PrimaryButton(
+                            isLarge: true,
+                            label: 'Save Settings',
+                            isLoading: state.isLoading,
+                            onPressed: _saveSettings,
+                          ),
                         ),
-                        const SizedBox(height: 32),
-                        ElevatedButton(
-                          onPressed: state.isLoading ? null : _saveSettings,
-                          style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                          child: state.isLoading 
-                              ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurface, strokeWidth: 2))
-                              : const Text('Save Settings', style: TextStyle(fontSize: 16)),
-                        ),
+                        const SizedBox(height: AppSpacing.p32),
                       ],
                     ),
                   ),

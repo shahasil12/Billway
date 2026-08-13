@@ -9,7 +9,7 @@ class UserManagementRepository {
 
   Future<List<User>> getUsers() async {
     try {
-      final response = await _dio.get('/users/manage/');
+      final response = await _dio.get('auth/manage/');
       if (response.statusCode == 200) {
         final data = response.data as List;
         return data.map((json) => UserModel.fromJson(json)).toList();
@@ -23,7 +23,7 @@ class UserManagementRepository {
   Future<User> createUser(Map<String, dynamic> userData) async {
     try {
       final response = await _dio.post(
-        '/users/manage/',
+        'auth/manage/',
         data: userData,
       );
       if (response.statusCode == 201) {
@@ -37,7 +37,7 @@ class UserManagementRepository {
 
   Future<void> deleteUser(int id) async {
     try {
-      final response = await _dio.delete('/users/manage/$id/');
+      final response = await _dio.delete('auth/manage/$id/');
       if (response.statusCode != 204) {
         throw Exception('Failed to delete user');
       }

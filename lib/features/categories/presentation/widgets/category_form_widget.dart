@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/category.dart';
 
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_inputs.dart';
+import '../../../../core/widgets/app_buttons.dart';
+
 class CategoryFormWidget extends StatefulWidget {
   final Category? initialCategory;
   final Function(Category) onSubmit;
@@ -52,27 +56,27 @@ class _CategoryFormWidgetState extends State<CategoryFormWidget> {
     return Form(
       key: _formKey,
       child: ListView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppSpacing.p24),
         children: [
-          TextFormField(
+          AppTextField(
+            label: 'Category Name *',
             controller: _nameController,
-            decoration: const InputDecoration(labelText: 'Category Name *', border: OutlineInputBorder()),
             validator: (value) => value == null || value.isEmpty ? 'Name is required' : null,
           ),
-          const SizedBox(height: 16),
-          TextFormField(
+          const SizedBox(height: AppSpacing.p16),
+          AppTextField(
+            label: 'Description',
             controller: _descriptionController,
-            decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
-            maxLines: 3,
           ),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: widget.isLoading ? null : _submit,
-            style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16)),
-            child: widget.isLoading 
-                ? const CircularProgressIndicator()
-                : Text(widget.initialCategory == null ? 'Create Category' : 'Update Category'),
-          ),
+          const SizedBox(height: AppSpacing.p32),
+          if (widget.isLoading)
+            const Center(child: CircularProgressIndicator())
+          else
+            PrimaryButton(
+              isLarge: true,
+              label: widget.initialCategory == null ? 'Create Category' : 'Update Category',
+              onPressed: _submit,
+            ),
         ],
       ),
     );

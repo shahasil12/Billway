@@ -2,11 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:io';
+
 import '../../../categories/presentation/controllers/category_list_controller.dart';
-import '../controllers/product_list_controller.dart';
 import '../../domain/entities/product.dart';
-import '../../../../core/providers.dart';
 import '../../../../core/widgets/barcode_scanner_screen.dart';
+
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_inputs.dart';
+import '../../../../core/widgets/app_buttons.dart';
+import '../../../../core/widgets/app_containers.dart';
 
 class ProductFormWidget extends ConsumerStatefulWidget {
   final Product? initialProduct;
@@ -36,6 +43,7 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
   int? _selectedCategoryId;
   bool _isActive = true;
   File? _imageFile;
+  bool _isAdvancedExpanded = false;
 
   @override
   void initState() {
@@ -49,7 +57,6 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
     _selectedCategoryId = widget.initialProduct?.categoryId;
     _isActive = widget.initialProduct?.status ?? true;
     
-    // Fetch categories for the dropdown if not already loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(categoryListProvider.notifier).fetchCategories();
     });
@@ -78,6 +85,12 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
+      if (_selectedCategoryId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a category')),
+        );
+        return;
+      }
       final product = Product(
         id: widget.initialProduct?.id,
         name: _nameController.text.trim(),
@@ -100,17 +113,18 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
     return Form(
       key: _formKey,
       child: ListView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppSpacing.p24),
         children: [
           Center(
             child: GestureDetector(
               onTap: _pickImage,
               child: Container(
-                width: 150,
-                height: 150,
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: AppColors.border),
                   image: _imageFile != null 
                       ? DecorationImage(image: FileImage(_imageFile!), fit: BoxFit.cover)
                       : (widget.initialProduct?.image != null 
@@ -118,110 +132,133 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
                           : null),
                 ),
                 child: _imageFile == null && widget.initialProduct?.image == null
-                    ? const Icon(Icons.camera_alt, size: 50, color: Colors.grey)
+                    ? const Icon(Icons.add_a_photo_outlined, size: 40, color: AppColors.textDisabled)
                     : null,
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          const Center(child: Text("Tap to select image", style: TextStyle(color: Colors.grey))),
-          const SizedBox(height: 24),
-          TextFormField(
+          const SizedBox(height: AppSpacing.p24),
+          
+          AppTextField(
+            label: 'Product Name *',
             controller: _nameController,
-            decoration: const InputDecoration(labelText: 'Product Name *', border: OutlineInputBorder()),
             validator: (value) => value == null || value.isEmpty ? 'Name is required' : null,
           ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<int>(
-            decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
-            value: _selectedCategoryId,
-            items: categories.map((cat) => DropdownMenuItem(
-              value: cat.id,
-              child: Text(cat.name),
-            )).toList(),
-            onChanged: (val) => setState(() => _selectedCategoryId = val),
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.p16),
+          
           Row(
             children: [
               Expanded(
-                child: TextFormField(
+                child: AppTextField(
+                  label: 'Price *',
                   controller: _priceController,
-                  decoration: const InputDecoration(labelText: 'Price *', border: OutlineInputBorder()),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   validator: (value) => value == null || double.tryParse(value) == null ? 'Valid price required' : null,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpacing.p16),
               Expanded(
-                child: TextFormField(
-                  controller: _taxController,
-                  decoration: const InputDecoration(labelText: 'Tax %', border: OutlineInputBorder()),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  validator: (value) => value != null && value.isNotEmpty && double.tryParse(value) == null ? 'Invalid tax' : null,
+                child: DropdownButtonFormField<int>(
+                  decoration: InputDecoration(
+                    labelText: 'Category *',
+                    filled: true,
+                    fillColor: AppColors.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                  ),
+                  value: _selectedCategoryId,
+                  items: categories.map((cat) => DropdownMenuItem(
+                    value: cat.id,
+                    child: Text(cat.name, style: AppTextStyles.bodyMedium),
+                  )).toList(),
+                  onChanged: (val) => setState(() => _selectedCategoryId = val),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.p16),
+          
           Row(
             children: [
               Expanded(
-                child: TextFormField(
-                  controller: _stockController,
-                  decoration: const InputDecoration(labelText: 'Stock', border: OutlineInputBorder()),
-                  keyboardType: TextInputType.number,
-                  validator: (value) => value != null && value.isNotEmpty && int.tryParse(value) == null ? 'Invalid stock' : null,
+                child: AppTextField(
+                  label: 'Tax %',
+                  controller: _taxController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpacing.p16),
               Expanded(
-                child: SwitchListTile(
-                  title: const Text('Active'),
-                  value: _isActive,
-                  onChanged: (val) => setState(() => _isActive = val),
+                child: AppCard(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.p16, vertical: 4),
+                  child: SwitchListTile(
+                    title: const Text('Active', style: AppTextStyles.bodyMedium),
+                    value: _isActive,
+                    onChanged: (val) => setState(() => _isActive = val),
+                    contentPadding: EdgeInsets.zero,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _barcodeController,
-            decoration: InputDecoration(
-              labelText: 'Barcode (Optional)', 
-              border: const OutlineInputBorder(), 
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.qr_code_scanner),
-                onPressed: () async {
-                  final scannedCode = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const BarcodeScannerScreen(),
-                    ),
-                  );
-                  if (scannedCode != null && scannedCode is String) {
-                    setState(() {
-                      _barcodeController.text = scannedCode;
-                    });
-                  }
-                },
+          
+          const SizedBox(height: AppSpacing.p24),
+          
+          ExpansionTile(
+            title: const Text('Advanced', style: AppTextStyles.h3),
+            tilePadding: EdgeInsets.zero,
+            onExpansionChanged: (val) => setState(() => _isAdvancedExpanded = val),
+            children: [
+              const SizedBox(height: AppSpacing.p16),
+              AppTextField(
+                label: 'Stock',
+                controller: _stockController,
+                keyboardType: TextInputType.number,
               ),
+              const SizedBox(height: AppSpacing.p16),
+              TextFormField(
+                controller: _barcodeController,
+                style: AppTextStyles.bodyLarge,
+                decoration: InputDecoration(
+                  labelText: 'Barcode (Optional)', 
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.qr_code_scanner),
+                    onPressed: () async {
+                      final scannedCode = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const BarcodeScannerScreen(),
+                        ),
+                      );
+                      if (scannedCode != null && scannedCode is String) {
+                        setState(() {
+                          _barcodeController.text = scannedCode;
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.p16),
+              AppTextField(
+                label: 'Description',
+                controller: _descriptionController,
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: AppSpacing.p32),
+          
+          if (widget.isLoading)
+            const Center(child: CircularProgressIndicator())
+          else
+            PrimaryButton(
+              isLarge: true,
+              label: widget.initialProduct == null ? 'Create Product' : 'Update Product',
+              onPressed: _submit,
             ),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _descriptionController,
-            decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
-            maxLines: 3,
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: widget.isLoading ? null : _submit,
-            style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16)),
-            child: widget.isLoading 
-                ? const CircularProgressIndicator()
-                : Text(widget.initialProduct == null ? 'Create Product' : 'Update Product'),
-          ),
         ],
       ),
     );
