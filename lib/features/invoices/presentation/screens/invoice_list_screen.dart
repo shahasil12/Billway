@@ -176,10 +176,9 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
                   style: AppTextStyles.financialLine.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
-                StatusChip(
-                  label: invoice.status,
-                  status: invoice.status == 'PAID' ? StatusType.success : StatusType.warning,
-                ),
+                invoice.status == 'PAID' 
+                      ? StatusChip.success(invoice.status) 
+                      : StatusChip.warning(invoice.status),
               ],
             ),
             onTap: () => context.push('/invoices/${invoice.id}', extra: invoice),

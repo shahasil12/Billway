@@ -33,7 +33,7 @@ class AppTheme {
         thickness: 1,
         space: 1,
       ),
-      cardTheme: const CardTheme(
+      cardTheme: const CardThemeData(
         color: AppColors.surface,
         elevation: 0,
         margin: EdgeInsets.zero,

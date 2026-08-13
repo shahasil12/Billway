@@ -6,7 +6,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_radius.dart';
-import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_containers.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../controllers/dashboard_controller.dart';
@@ -48,8 +47,6 @@ class DashboardScreen extends ConsumerWidget {
       _buildSummaryCards(context, summary, isTablet),
       const SizedBox(height: AppSpacing.p24),
       _buildQuickActions(context, user, isTablet),
-      const SizedBox(height: AppSpacing.p24),
-      _buildChart(context, summary.salesTrend),
       const SizedBox(height: AppSpacing.p24),
       _buildRecentInvoices(context, summary.recentInvoices),
       const SizedBox(height: AppSpacing.p32),
@@ -111,39 +108,7 @@ class DashboardScreen extends ConsumerWidget {
     }
   }
 
-  Widget _buildChart(BuildContext context, List trend) {
-    if (trend.isEmpty) return const SizedBox.shrink();
-    
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Sales Trend', style: AppTextStyles.h3),
-          const SizedBox(height: AppSpacing.p16),
-          SizedBox(
-            height: 200,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(show: false),
-                titlesData: FlTitlesData(show: false),
-                borderData: FlBorderData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: trend.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.total as double)).toList(),
-                    isCurved: true,
-                    color: AppColors.primary,
-                    barWidth: 2,
-                    dotData: FlDotData(show: false),
-                    belowBarData: BarAreaData(show: true, color: AppColors.primaryLight.withOpacity(0.5)),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildRecentInvoices(BuildContext context, List<RecentInvoice> invoices) {
     return Column(

@@ -19,7 +19,7 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/widgets/app_inputs.dart';
 import '../../../../core/widgets/app_containers.dart';
 import '../../../../core/widgets/app_buttons.dart';
-import '../../../../core/widgets/billing_widgets.dart';
+import '../../../../core/widgets/billing_specifics.dart';
 
 class CreateInvoiceScreen extends ConsumerStatefulWidget {
   const CreateInvoiceScreen({super.key});
@@ -306,9 +306,10 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
             children: [
               Expanded(
                 child: AppTextField(
+                  label: 'Barcode',
                   controller: _barcodeController,
                   hint: 'Enter barcode manually...',
-                  onSubmitted: _handleScannedBarcode,
+                  onFieldSubmitted: _handleScannedBarcode,
                 ),
               ),
               IconButton(
@@ -434,7 +435,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
         const SizedBox(height: AppSpacing.p16),
         PaymentMethodSelector(
           selectedMethod: _paymentMethod,
-          onChanged: (val) => setState(() => _paymentMethod = val),
+          onSelected: (val) => setState(() => _paymentMethod = val),
         ),
       ],
     );
@@ -456,11 +457,10 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
       child: Column(
         children: [
           TotalsBlock(
-            currency: currency,
             subtotal: _calculatedSubtotal,
-            discount: _calculatedDiscount,
-            tax: _calculatedTax,
-            total: _calculatedGrandTotal,
+            discountAmount: _calculatedDiscount,
+            taxTotal: _calculatedTax,
+            grandTotal: _calculatedGrandTotal,
           ),
           const SizedBox(height: AppSpacing.p16),
           SizedBox(

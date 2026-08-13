@@ -254,10 +254,9 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
                   ],
                 ),
               ),
-              StatusChip(
-                label: _invoice.status,
-                status: _invoice.status == 'PAID' ? StatusType.success : StatusType.warning,
-              ),
+                _invoice.status == 'PAID' 
+                      ? StatusChip.success(_invoice.status) 
+                      : StatusChip.warning(_invoice.status),
             ],
           ),
           if (_invoice.reference != null && _invoice.reference!.isNotEmpty) ...[

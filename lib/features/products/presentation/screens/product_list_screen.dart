@@ -231,7 +231,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                     width: 12,
                     height: 12,
                     decoration: BoxDecoration(
-                      color: product.isActive ? AppColors.success : AppColors.textDisabled,
+                      color: product.status ? AppColors.success : AppColors.textDisabled,
                       shape: BoxShape.circle,
                       border: Border.all(color: AppColors.surface, width: 2),
                     ),

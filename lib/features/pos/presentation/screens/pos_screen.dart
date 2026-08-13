@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/pos_providers.dart';
-import '../../../products/presentation/providers/product_providers.dart';
-import '../../../customers/presentation/providers/customer_providers.dart';
-import '../../../categories/presentation/providers/category_providers.dart';
+import '../../../products/presentation/controllers/product_list_controller.dart';
+import '../../../customers/presentation/controllers/customer_list_controller.dart';
+import '../../../categories/presentation/controllers/category_list_controller.dart';
+import '../controllers/pos_cart_controller.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../domain/entities/cart_item.dart';
 
@@ -16,7 +17,8 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/widgets/app_inputs.dart';
 import '../../../../core/widgets/app_buttons.dart';
 import '../../../../core/widgets/app_containers.dart';
-import '../../../../core/widgets/billing_widgets.dart';
+import '../../../../core/widgets/billing_specifics.dart';
+import '../../../../core/widgets/app_inputs.dart';
 
 class POSScreen extends ConsumerStatefulWidget {
   const POSScreen({super.key});
@@ -33,9 +35,9 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      ref.read(productControllerProvider.notifier).loadProducts();
-      ref.read(categoryControllerProvider.notifier).loadCategories();
-      ref.read(customerControllerProvider.notifier).loadCustomers();
+      ref.read(productListProvider.notifier).fetchProducts();
+      ref.read(categoryListProvider.notifier).fetchCategories();
+      ref.read(customerListProvider.notifier).fetchCustomers();
     });
   }
 
@@ -147,7 +149,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
               
               PaymentMethodSelector(
                 selectedMethod: paymentMethod,
-                onChanged: (val) => setState(() => paymentMethod = val),
+                onSelected: (val) => setState(() => paymentMethod = val),
               ),
               const SizedBox(height: AppSpacing.p16),
               
@@ -192,8 +194,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   Widget build(BuildContext context) {
     final sessionState = ref.watch(posSessionControllerProvider);
     final cartState = ref.watch(posCartControllerProvider);
-    final productsState = ref.watch(productControllerProvider);
-    final categoriesState = ref.watch(categoryControllerProvider);
+    final productsState = ref.watch(productListProvider);
+    final categoriesState = ref.watch(categoryListProvider);
     final isTablet = MediaQuery.of(context).size.width >= 600;
 
     if (!sessionState.isLoading && sessionState.session == null) {
@@ -207,10 +209,10 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final products = productsState.value ?? [];
+    final products = productsState.products;
     final filteredProducts = _selectedCategoryId == null 
         ? products 
-        : products.where((p) => p.category?.id == _selectedCategoryId).toList();
+        : products.where((p) => p.categoryId == _selectedCategoryId).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -225,7 +227,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           )
         ],
       ),
-      body: isTablet ? _buildTabletLayout(filteredProducts, cartState, categoriesState.value ?? []) : _buildPhoneLayout(filteredProducts, cartState, categoriesState.value ?? []),
+      body: isTablet ? _buildTabletLayout(filteredProducts, cartState, categoriesState.categories) : _buildPhoneLayout(filteredProducts, cartState, categoriesState.categories),
     );
   }
 
@@ -452,7 +454,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                             value: item.quantity,
                             onChanged: (val) {
                               if (val > 0) {
-                                ref.read(posCartControllerProvider.notifier).updateQuantity(item.product.id, val);
+                                ref.read(posCartControllerProvider.notifier).updateQuantity(item.product.id!, val);
                               } else {
                                 // removing item handling if quantity is 0? The pos controller might handle it, or I can do:
                                 // but steppers usually prevent going to 0 unless specifically built for it.
@@ -483,12 +485,11 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           child: Column(
             children: [
               TotalsBlock(
-                currency: '\$',
                 subtotal: cartState.subtotal,
-                tax: cartState.taxTotal,
-                total: cartState.grandTotal,
-              ),
-              const SizedBox(height: AppSpacing.p16),
+                discountAmount: cartState.discountAmount,
+                taxTotal: cartState.taxTotal,
+                grandTotal: cartState.grandTotal,
+              ),const SizedBox(height: AppSpacing.p16),
               SizedBox(
                 width: double.infinity,
                 child: PrimaryButton(
