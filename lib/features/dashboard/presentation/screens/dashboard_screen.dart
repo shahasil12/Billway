@@ -7,10 +7,13 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/widgets/app_containers.dart';
+import '../../../../core/widgets/app_buttons.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../controllers/dashboard_controller.dart';
 import '../../../../core/providers.dart';
 import '../../../../features/auth/domain/entities/user.dart';
+import '../../../../features/pos/presentation/providers/pos_providers.dart';
+import '../../../../features/pos/domain/entities/pos_session.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -19,6 +22,7 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final summaryAsync = ref.watch(dashboardSummaryProvider);
     final user = ref.watch(authStateProvider).value;
+    final posSessionState = ref.watch(posSessionControllerProvider);
     final isTablet = MediaQuery.of(context).size.width >= 600;
 
     return Scaffold(
@@ -35,17 +39,21 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
       body: summaryAsync.when(
-        data: (summary) => _buildBody(context, summary, user, isTablet),
+        data: (summary) => _buildBody(context, summary, user, posSessionState, isTablet),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('Error: $err')),
       ),
     );
   }
 
-  Widget _buildBody(BuildContext context, DashboardSummary summary, dynamic user, bool isTablet) {
+  Widget _buildBody(BuildContext context, DashboardSummary summary, dynamic user, dynamic posSessionState, bool isTablet) {
     final children = [
       _buildSummaryCards(context, summary, isTablet),
       const SizedBox(height: AppSpacing.p24),
+      if (posSessionState.session != null) ...[
+        _buildActiveSessionBanner(context, posSessionState.session),
+        const SizedBox(height: AppSpacing.p24),
+      ],
       _buildQuickActions(context, user, isTablet),
       const SizedBox(height: AppSpacing.p24),
       _buildRecentInvoices(context, summary.recentInvoices),
@@ -63,10 +71,10 @@ class DashboardScreen extends ConsumerWidget {
 
   Widget _buildSummaryCards(BuildContext context, DashboardSummary summary, bool isTablet) {
     final cards = [
-      _StatCard(title: 'Sales Today', value: '\$${summary.todaysSales.toStringAsFixed(2)}'),
-      _StatCard(title: 'Invoices Today', value: '${summary.todaysInvoiceCount}'),
-      _StatCard(title: 'Customers', value: '${summary.totalCustomers}'),
-      _StatCard(title: 'Products', value: '${summary.totalProducts}'),
+      _StatCard(title: 'Sales Today', value: '\$${summary.todaysSales.toStringAsFixed(2)}', icon: Icons.trending_up, color: AppColors.primary),
+      _StatCard(title: 'Invoices Today', value: '${summary.todaysInvoiceCount}', icon: Icons.receipt_long, color: AppColors.secondary),
+      _StatCard(title: 'Customers', value: '${summary.totalCustomers}', icon: Icons.people_alt, color: AppColors.success),
+      _StatCard(title: 'Products', value: '${summary.totalProducts}', icon: Icons.inventory_2, color: AppColors.warning),
     ];
 
     if (isTablet) {
@@ -75,10 +83,10 @@ class DashboardScreen extends ConsumerWidget {
       );
     } else {
       return SizedBox(
-        height: 120,
+        height: 140,
         child: ListView(
           scrollDirection: Axis.horizontal,
-          children: cards.map((c) => Container(width: 140, margin: const EdgeInsets.only(right: AppSpacing.p12), child: c)).toList(),
+          children: cards.map((c) => Container(width: 160, margin: const EdgeInsets.only(right: AppSpacing.p12), child: c)).toList(),
         ),
       );
     }
@@ -139,13 +147,45 @@ class DashboardScreen extends ConsumerWidget {
       ],
     );
   }
+
+  Widget _buildActiveSessionBanner(BuildContext context, POSSession session) {
+    return AppCard(
+      color: AppColors.primaryLight,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.p12),
+            decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+            child: const Icon(Icons.point_of_sale, color: Colors.white),
+          ),
+          const SizedBox(width: AppSpacing.p16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Active POS Session', style: AppTextStyles.h3.copyWith(color: AppColors.primary)),
+                const SizedBox(height: 4),
+                Text('Opened with \$${session.openingCash.toStringAsFixed(2)}', style: AppTextStyles.bodyMedium),
+              ],
+            ),
+          ),
+          PrimaryButton(
+            label: 'Go to POS',
+            onPressed: () => context.go('/pos'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _StatCard extends StatelessWidget {
   final String title;
   final String value;
+  final IconData icon;
+  final Color color;
 
-  const _StatCard({required this.title, required this.value});
+  const _StatCard({required this.title, required this.value, required this.icon, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -154,8 +194,23 @@ class _StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(title, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
-          const SizedBox(height: AppSpacing.p8),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.p8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(width: AppSpacing.p12),
+              Expanded(
+                child: Text(title, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.p16),
           Text(value, style: AppTextStyles.h2),
         ],
       ),

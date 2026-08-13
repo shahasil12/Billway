@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/pos_providers.dart';
+import '../controllers/pos_session_controller.dart';
 import '../../../products/presentation/controllers/product_list_controller.dart';
 import '../../../customers/presentation/controllers/customer_list_controller.dart';
 import '../../../categories/presentation/controllers/category_list_controller.dart';
@@ -198,15 +199,36 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     final categoriesState = ref.watch(categoryListProvider);
     final isTablet = MediaQuery.of(context).size.width >= 600;
 
-    if (!sessionState.isLoading && sessionState.session == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    ref.listen<POSSessionState>(posSessionControllerProvider, (previous, next) {
+      final wasLoading = previous?.isLoading ?? true;
+      if (wasLoading && !next.isLoading && next.session == null) {
         _showOpenSessionDialog();
-      });
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+      }
+    });
 
     if (sessionState.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (sessionState.session == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Point of Sale')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.point_of_sale, size: 64, color: AppColors.textDisabled),
+              const SizedBox(height: AppSpacing.p16),
+              const Text('No Active Session', style: TextStyle(color: AppColors.textSecondary)),
+              const SizedBox(height: AppSpacing.p24),
+              PrimaryButton(
+                label: 'Open Session',
+                onPressed: _showOpenSessionDialog,
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     final products = productsState.products;
@@ -233,6 +255,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
   Widget _buildTabletLayout(List<Product> products, POSCartState cartState, List<dynamic> categories) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // CATEGORIES SIDEBAR
         Container(

@@ -118,22 +118,35 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
           Center(
             child: GestureDetector(
               onTap: _pickImage,
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceAlt,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: AppColors.border),
-                  image: _imageFile != null 
-                      ? DecorationImage(image: FileImage(_imageFile!), fit: BoxFit.cover)
-                      : (widget.initialProduct?.image != null 
-                          ? DecorationImage(image: NetworkImage(widget.initialProduct!.image!), fit: BoxFit.cover)
-                          : null),
-                ),
-                child: _imageFile == null && widget.initialProduct?.image == null
-                    ? const Icon(Icons.add_a_photo_outlined, size: 40, color: AppColors.textDisabled)
-                    : null,
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(color: AppColors.border),
+                      image: _imageFile != null 
+                          ? DecorationImage(image: FileImage(_imageFile!), fit: BoxFit.cover)
+                          : (widget.initialProduct?.image != null 
+                              ? DecorationImage(image: NetworkImage(widget.initialProduct!.image!), fit: BoxFit.cover)
+                              : null),
+                    ),
+                    child: _imageFile == null && widget.initialProduct?.image == null
+                        ? const Icon(Icons.add_a_photo_outlined, size: 40, color: AppColors.textDisabled)
+                        : null,
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.p8),
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.edit, size: 16, color: Colors.white),
+                  ),
+                ],
               ),
             ),
           ),

@@ -68,7 +68,7 @@ final authStateProvider = StateNotifierProvider<AuthController, AsyncValue<User?
 
 
 final userManagementRepositoryProvider = Provider<UserManagementRepository>((ref) {
-  return UserManagementRepository(ref.read(dioProvider));
+  return UserManagementRepository(ref.read(apiClientProvider).dio);
 });
 
 final userManagementControllerProvider = StateNotifierProvider<UserManagementController, AsyncValue<List<User>>>((ref) {

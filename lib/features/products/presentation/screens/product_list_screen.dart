@@ -213,7 +213,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            flex: 3,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -240,9 +239,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
               ],
             ),
           ),
-          Expanded(
-            flex: 2,
-            child: Padding(
+          Padding(
               padding: const EdgeInsets.all(AppSpacing.p12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,7 +281,6 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                 ],
               ),
             ),
-          ),
         ],
       ),
     );

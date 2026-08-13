@@ -11,8 +11,14 @@ class UserManagementRepository {
     try {
       final response = await _dio.get('auth/manage/');
       if (response.statusCode == 200) {
-        final data = response.data as List;
-        return data.map((json) => UserModel.fromJson(json)).toList();
+        final data = response.data;
+        if (data is Map<String, dynamic> && data.containsKey('results')) {
+          final results = data['results'] as List;
+          return results.map((json) => UserModel.fromJson(json)).toList();
+        } else if (data is List) {
+          return data.map((json) => UserModel.fromJson(json)).toList();
+        }
+        throw Exception('Unexpected response format');
       }
       throw Exception('Failed to load users');
     } catch (e) {
