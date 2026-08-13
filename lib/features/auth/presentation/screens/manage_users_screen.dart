@@ -48,10 +48,18 @@ class ManageUsersScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _getRoleColor(user.role).withOpacity(0.2),
+                          color: _getRoleColor(user.role).withAlpha(40),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(user.role.name.toUpperCase(), style: TextStyle(color: _getRoleColor(user.role), fontSize: 12, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          user.role == UserRole.unknown ? 'STAFF' : user.role.name.toUpperCase(),
+                          style: TextStyle(color: _getRoleColor(user.role), fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                        tooltip: 'Change Role',
+                        onPressed: () => _changeRole(context, ref, user),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.redAccent),
@@ -78,6 +86,42 @@ class ManageUsersScreen extends ConsumerWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _changeRole(BuildContext context, WidgetRef ref, User user) {
+    UserRole selectedRole = user.role == UserRole.unknown ? UserRole.cashier : user.role;
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          title: Text('Change Role: ${user.username}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: UserRole.values
+                .where((r) => r != UserRole.unknown)
+                .map((role) => RadioListTile<UserRole>(
+                      title: Text(role.name.toUpperCase()),
+                      value: role,
+                      groupValue: selectedRole,
+                      onChanged: (val) {
+                        if (val != null) setState(() => selectedRole = val);
+                      },
+                    ))
+                .toList(),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                ref.read(userManagementControllerProvider.notifier).updateUserRole(user.id, selectedRole.name.toUpperCase());
+              },
+              child: const Text('Save'),
+            ),
+          ],
         ),
       ),
     );

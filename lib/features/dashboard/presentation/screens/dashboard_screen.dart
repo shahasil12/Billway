@@ -50,7 +50,7 @@ class DashboardScreen extends ConsumerWidget {
     final children = [
       _buildSummaryCards(context, summary, isTablet),
       const SizedBox(height: AppSpacing.p24),
-      if (posSessionState.session != null) ...[
+      if (!posSessionState.isLoading && posSessionState.session != null) ...[
         _buildActiveSessionBanner(context, posSessionState.session),
         const SizedBox(height: AppSpacing.p24),
       ],
@@ -149,8 +149,13 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildActiveSessionBanner(BuildContext context, POSSession session) {
-    return AppCard(
-      color: AppColors.primaryLight,
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.p16),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.primary.withAlpha(60)),
+      ),
       child: Row(
         children: [
           Container(

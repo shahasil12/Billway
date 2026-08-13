@@ -51,4 +51,16 @@ class UserManagementRepository {
       throw Exception('Error deleting user: $e');
     }
   }
+
+  Future<User> updateUserRole(int id, String role) async {
+    try {
+      final response = await _dio.patch('auth/manage/$id/', data: {'role': role});
+      if (response.statusCode == 200) {
+        return UserModel.fromJson(response.data);
+      }
+      throw Exception('Failed to update role: ${response.data}');
+    } catch (e) {
+      throw Exception('Error updating role: $e');
+    }
+  }
 }

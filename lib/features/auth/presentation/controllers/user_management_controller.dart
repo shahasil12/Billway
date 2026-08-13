@@ -42,4 +42,17 @@ class UserManagementController extends StateNotifier<AsyncValue<List<User>>> {
       throw Exception('Failed to delete user: $e');
     }
   }
+
+  Future<void> updateUserRole(int id, String role) async {
+    try {
+      final updatedUser = await _repository.updateUserRole(id, role);
+      if (state.hasValue) {
+        state = AsyncValue.data(
+          state.value!.map((u) => u.id == id ? updatedUser : u).toList(),
+        );
+      }
+    } catch (e) {
+      throw Exception('Failed to update role: $e');
+    }
+  }
 }

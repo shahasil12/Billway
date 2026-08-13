@@ -88,7 +88,9 @@ class _AddUserDialogState extends ConsumerState<AddUserDialog> {
                 DropdownButtonFormField<UserRole>(
                   value: _selectedRole,
                   decoration: const InputDecoration(labelText: 'Role', prefixIcon: Icon(Icons.badge)),
-                  items: UserRole.values.map((role) {
+                  items: UserRole.values
+                      .where((r) => r != UserRole.unknown)
+                      .map((role) {
                     return DropdownMenuItem(
                       value: role,
                       child: Text(role.name.toUpperCase()),

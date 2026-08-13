@@ -18,11 +18,12 @@ class POSSessionState {
     String? error,
     POSSession? session,
     bool clearError = false,
+    bool clearSession = false,
   }) {
     return POSSessionState(
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
-      session: session ?? this.session,
+      session: clearSession ? null : (session ?? this.session),
     );
   }
 }
@@ -39,8 +40,14 @@ class POSSessionController extends StateNotifier<POSSessionState> {
     final result = await _repository.getCurrentSession();
     
     result.fold(
-      (failure) => state = state.copyWith(isLoading: false, error: failure.message),
-      (session) => state = state.copyWith(isLoading: false, session: session),
+      (failure) => state = state.copyWith(isLoading: false, error: failure.message, clearSession: true),
+      (session) {
+        if (session != null) {
+          state = state.copyWith(isLoading: false, session: session);
+        } else {
+          state = state.copyWith(isLoading: false, clearSession: true);
+        }
+      },
     );
   }
 
@@ -72,7 +79,7 @@ class POSSessionController extends StateNotifier<POSSessionState> {
         return false;
       },
       (session) {
-        state = state.copyWith(isLoading: false, session: null);
+        state = state.copyWith(isLoading: false, clearSession: true);
         return true;
       },
     );

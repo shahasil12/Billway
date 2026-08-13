@@ -267,11 +267,9 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           )
         ],
       ),
-      body: SafeArea(
-        child: isTablet
-            ? _buildTabletLayout(filteredProducts, cartState, categoriesState.categories)
-            : _buildPhoneLayout(filteredProducts, cartState, categoriesState.categories),
-      ),
+      body: isTablet
+          ? _buildTabletLayout(filteredProducts, cartState, categoriesState.categories)
+          : _buildPhoneLayout(filteredProducts, cartState, categoriesState.categories),
     );
   }
 
@@ -325,10 +323,11 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
   Widget _buildPhoneLayout(List<Product> products, POSCartState cartState, List<dynamic> categories) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // CATEGORIES TABS
         SizedBox(
-          height: 60,
+          height: 56,
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.p16, vertical: AppSpacing.p8),
@@ -338,18 +337,17 @@ class _POSScreenState extends ConsumerState<POSScreen> {
             ],
           ),
         ),
-        
+        const Divider(height: 1, color: AppColors.border),
         // PRODUCTS GRID
         Expanded(
           child: _buildProductsGrid(products, 2),
         ),
-        
-        // BOTTOM SHEET CART SUMMRAY (Mini cart)
+        // MINI CART BAR
         Container(
-          padding: const EdgeInsets.all(AppSpacing.p16),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.p16, vertical: AppSpacing.p12),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
+            border: const Border(top: BorderSide(color: AppColors.border)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -420,37 +418,61 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       itemCount: products.length,
       itemBuilder: (context, index) {
         final p = products[index];
-        return AppCard(
-          padding: EdgeInsets.zero,
-          onTap: () => ref.read(posCartControllerProvider.notifier).addProduct(p),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: Container(
-                  color: AppColors.surfaceAlt,
-                  child: p.image != null 
-                    ? Image.network(p.image!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.inventory_2_outlined, size: 40, color: AppColors.textDisabled))
-                    : const Icon(Icons.inventory_2_outlined, size: 40, color: AppColors.textDisabled),
-                ),
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          child: Material(
+            color: AppColors.surface,
+            elevation: 1,
+            child: InkWell(
+              onTap: () => ref.read(posCartControllerProvider.notifier).addProduct(p),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Container(
+                      color: AppColors.surfaceAlt,
+                      child: p.image != null
+                          ? Image.network(
+                              p.image!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Center(
+                                child: Icon(Icons.inventory_2_outlined, size: 40, color: AppColors.textDisabled),
+                              ),
+                            )
+                          : const Center(
+                              child: Icon(Icons.inventory_2_outlined, size: 40, color: AppColors.textDisabled),
+                            ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpacing.p12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          p.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '\$${p.price.toStringAsFixed(2)}',
+                          style: AppTextStyles.bodyLarge.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.p12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    Text('\$${p.price.toStringAsFixed(2)}', style: AppTextStyles.bodyLarge.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         );
       },
     );
   }
+
 
   Widget _buildCartSidebar(POSCartState cartState) {
     return Column(
