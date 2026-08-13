@@ -39,14 +39,14 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
       body: summaryAsync.when(
-        data: (summary) => _buildBody(context, summary, user, posSessionState, isTablet),
+        data: (summary) => _buildBody(context, ref, summary, user, posSessionState, isTablet),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('Error: $err')),
       ),
     );
   }
 
-  Widget _buildBody(BuildContext context, DashboardSummary summary, dynamic user, dynamic posSessionState, bool isTablet) {
+  Widget _buildBody(BuildContext context, WidgetRef ref, DashboardSummary summary, dynamic user, dynamic posSessionState, bool isTablet) {
     final children = [
       _buildSummaryCards(context, summary, isTablet),
       const SizedBox(height: AppSpacing.p24),
@@ -60,12 +60,19 @@ class DashboardScreen extends ConsumerWidget {
       const SizedBox(height: AppSpacing.p32),
     ];
 
-    return ListView(
-      padding: EdgeInsets.symmetric(
-        horizontal: isTablet ? AppSpacing.p32 : AppSpacing.p16,
-        vertical: AppSpacing.p24,
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(dashboardSummaryProvider);
+        await ref.read(posSessionControllerProvider.notifier).checkCurrentSession();
+      },
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.symmetric(
+          horizontal: isTablet ? AppSpacing.p32 : AppSpacing.p16,
+          vertical: AppSpacing.p24,
+        ),
+        children: children,
       ),
-      children: children,
     );
   }
 

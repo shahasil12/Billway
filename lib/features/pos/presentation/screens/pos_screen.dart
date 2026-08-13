@@ -407,8 +407,14 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   }
 
   Widget _buildProductsGrid(List<Product> products, int crossAxisCount) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(AppSpacing.p16),
+    return RefreshIndicator(
+      onRefresh: () async {
+        await ref.read(productListProvider.notifier).fetchProducts(isRefresh: true);
+        await ref.read(categoryListProvider.notifier).fetchCategories();
+      },
+      child: GridView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSpacing.p16),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
         childAspectRatio: 0.85,
@@ -470,7 +476,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           ),
         );
       },
-    );
+    ));
   }
 
 
