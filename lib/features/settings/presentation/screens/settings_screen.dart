@@ -156,101 +156,111 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           const SizedBox(height: AppSpacing.p32),
                         ],
                         
-                        Text('Company Details', style: AppTextStyles.h3),
-                        const SizedBox(height: AppSpacing.p16),
-                        AppCard(
-                          child: Column(
-                            children: [
-                              AppTextField(
-                                controller: _nameController,
-                                label: 'Business Name *',
-                                validator: (value) => value == null || value.isEmpty ? 'Required' : null,
-                              ),
-                              const SizedBox(height: AppSpacing.p16),
-                              AppTextField(
-                                controller: _addressController,
-                                label: 'Business Address *',
-                                maxLines: 3,
-                                validator: (value) => value == null || value.isEmpty ? 'Required' : null,
-                              ),
-                              const SizedBox(height: AppSpacing.p16),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: AppTextField(
-                                      controller: _phoneController,
-                                      label: 'Phone Number *',
-                                      validator: (value) => value == null || value.isEmpty ? 'Required' : null,
-                                    ),
-                                  ),
-                                  const SizedBox(width: AppSpacing.p16),
-                                  Expanded(
-                                    child: AppTextField(
-                                      controller: _gstController,
-                                      label: 'GST Number (Optional)',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                        if (user?.role == UserRole.cashier) ...[
+                          const SizedBox(height: AppSpacing.p32),
+                          const Center(
+                            child: Text(
+                              'You do not have permission to view or edit company settings.',
+                              style: TextStyle(color: AppColors.textSecondary),
+                            ),
                           ),
-                        ),
-                        
-                        const SizedBox(height: AppSpacing.p32),
-                        Text('Invoice Preferences', style: AppTextStyles.h3),
-                        const SizedBox(height: AppSpacing.p16),
-                        
-                        AppCard(
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: AppTextField(
-                                      controller: _prefixController,
-                                      label: 'Invoice Prefix *',
-                                      validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                        ] else ...[
+                          Text('Company Details', style: AppTextStyles.h3),
+                          const SizedBox(height: AppSpacing.p16),
+                          AppCard(
+                            child: Column(
+                              children: [
+                                AppTextField(
+                                  controller: _nameController,
+                                  label: 'Business Name *',
+                                  validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                                ),
+                                const SizedBox(height: AppSpacing.p16),
+                                AppTextField(
+                                  controller: _addressController,
+                                  label: 'Business Address *',
+                                  maxLines: 3,
+                                  validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                                ),
+                                const SizedBox(height: AppSpacing.p16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: AppTextField(
+                                        controller: _phoneController,
+                                        label: 'Phone Number *',
+                                        validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: AppSpacing.p16),
-                                  Expanded(
-                                    child: AppTextField(
-                                      controller: _currencyController,
-                                      label: 'Currency Symbol *',
-                                      validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                                    const SizedBox(width: AppSpacing.p16),
+                                    Expanded(
+                                      child: AppTextField(
+                                        controller: _gstController,
+                                        label: 'GST Number (Optional)',
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: AppSpacing.p16),
-                              AppTextField(
-                                controller: _taxController,
-                                label: 'Default Tax Percentage (%) *',
-                                keyboardType: TextInputType.number,
-                                validator: (value) => value == null || value.isEmpty ? 'Required' : null,
-                              ),
-                              const SizedBox(height: AppSpacing.p16),
-                              AppTextField(
-                                controller: _footerController,
-                                label: 'Invoice Footer Note *',
-                                maxLines: 2,
-                                validator: (value) => value == null || value.isEmpty ? 'Required' : null,
-                              ),
-                            ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        
-                        const SizedBox(height: AppSpacing.p32),
-                        SizedBox(
-                          width: double.infinity,
-                          child: PrimaryButton(
-                            isLarge: true,
-                            label: 'Save Settings',
-                            isLoading: state.isLoading,
-                            onPressed: _saveSettings,
+                          
+                          const SizedBox(height: AppSpacing.p32),
+                          Text('Invoice Preferences', style: AppTextStyles.h3),
+                          const SizedBox(height: AppSpacing.p16),
+                          
+                          AppCard(
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: AppTextField(
+                                        controller: _prefixController,
+                                        label: 'Invoice Prefix *',
+                                        validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpacing.p16),
+                                    Expanded(
+                                      child: AppTextField(
+                                        controller: _currencyController,
+                                        label: 'Currency Symbol *',
+                                        validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: AppSpacing.p16),
+                                AppTextField(
+                                  controller: _taxController,
+                                  label: 'Default Tax Percentage (%) *',
+                                  keyboardType: TextInputType.number,
+                                  validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                                ),
+                                const SizedBox(height: AppSpacing.p16),
+                                AppTextField(
+                                  controller: _footerController,
+                                  label: 'Invoice Footer Note *',
+                                  maxLines: 2,
+                                  validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: AppSpacing.p32),
+                          
+                          const SizedBox(height: AppSpacing.p32),
+                          SizedBox(
+                            width: double.infinity,
+                            child: PrimaryButton(
+                              isLarge: true,
+                              label: 'Save Settings',
+                              isLoading: state.isLoading,
+                              onPressed: _saveSettings,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.p32),
+                        ],
                       ],
                     ),
                   ),

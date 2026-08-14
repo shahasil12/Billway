@@ -20,6 +20,8 @@ class _AddUserDialogState extends ConsumerState<AddUserDialog> {
   UserRole _selectedRole = UserRole.cashier;
   bool _isLoading = false;
 
+  bool _obscurePassword = true;
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -62,8 +64,19 @@ class _AddUserDialogState extends ConsumerState<AddUserDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock)),
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    prefixIcon: const Icon(Icons.lock),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
+                  ),
                   validator: (value) => value == null || value.isEmpty ? 'Required' : null,
                 ),
                 const SizedBox(height: 12),

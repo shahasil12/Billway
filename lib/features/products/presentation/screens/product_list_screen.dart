@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'dart:async';
 
 import '../../../../core/providers.dart';
+import '../../../auth/domain/entities/user.dart';
 import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../controllers/product_list_controller.dart';
 import '../../../categories/presentation/controllers/category_list_controller.dart';
@@ -66,13 +67,14 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
       appBar: AppBar(
         title: const Text('Products'),
         actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.p16),
-            child: PrimaryButton(
-              label: 'Add Product',
-              onPressed: () => context.push('/products/add'),
-            ),
-          )
+          if (ref.watch(authStateProvider).value?.role != UserRole.cashier)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.p16),
+              child: PrimaryButton(
+                label: 'Add Product',
+                onPressed: () => context.push('/products/add'),
+              ),
+            )
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(116),
@@ -164,14 +166,16 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
             const Icon(Icons.inventory_2_outlined, size: 64, color: AppColors.textDisabled),
             const SizedBox(height: AppSpacing.p16),
             const Text('No products found', style: TextStyle(color: AppColors.textSecondary)),
-            const SizedBox(height: AppSpacing.p24),
-            SizedBox(
-              width: 200,
-              child: PrimaryButton(
-                label: 'Add First Product',
-                onPressed: () => context.push('/products/add'),
+            if (ref.watch(authStateProvider).value?.role != UserRole.cashier) ...[
+              const SizedBox(height: AppSpacing.p24),
+              SizedBox(
+                width: 200,
+                child: PrimaryButton(
+                  label: 'Add First Product',
+                  onPressed: () => context.push('/products/add'),
+                ),
               ),
-            ),
+            ]
           ],
         ),
       );
@@ -305,12 +309,13 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                         '$currency${product.price.toStringAsFixed(2)}',
                         style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w700, color: AppColors.primary),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.edit_outlined, size: 20, color: AppColors.textSecondary),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () => context.push('/products/edit', extra: product),
-                      ),
+                      if (ref.watch(authStateProvider).value?.role != UserRole.cashier)
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 20, color: AppColors.textSecondary),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () => context.push('/products/edit', extra: product),
+                        ),
                     ],
                   ),
                 ],
