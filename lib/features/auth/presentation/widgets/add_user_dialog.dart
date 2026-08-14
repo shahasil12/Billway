@@ -127,8 +127,8 @@ class _AddUserDialogState extends ConsumerState<AddUserDialog> {
 
     try {
       await ref.read(userManagementControllerProvider.notifier).createUser({
-        'username': _usernameController.text,
-        'email': _emailController.text,
+        'username': _usernameController.text.trim(),
+        'email': _emailController.text.trim(),
         'password': _passwordController.text,
         'first_name': _firstNameController.text,
         'last_name': _lastNameController.text,

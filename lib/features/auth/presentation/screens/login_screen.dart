@@ -25,7 +25,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _login() async {
     if (_formKey.currentState!.validate()) {
       final success = await ref.read(authStateProvider.notifier).login(
-        _usernameController.text,
+        _usernameController.text.trim(),
         _passwordController.text,
       );
       if (success && mounted) {
