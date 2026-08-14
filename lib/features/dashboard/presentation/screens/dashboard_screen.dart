@@ -58,7 +58,7 @@ class DashboardScreen extends ConsumerWidget {
       ],
       _buildQuickActions(context, user, isTablet),
       const SizedBox(height: AppSpacing.p24),
-      _buildRecentInvoices(context, summary.recentInvoices, currency),
+      _buildRecentInvoices(context, ref, summary.recentInvoices, currency),
       const SizedBox(height: AppSpacing.p32),
     ];
 
@@ -127,7 +127,7 @@ class DashboardScreen extends ConsumerWidget {
 
 
 
-  Widget _buildRecentInvoices(BuildContext context, List<RecentInvoice> invoices, String currency) {
+  Widget _buildRecentInvoices(BuildContext context, WidgetRef ref, List<RecentInvoice> invoices, String currency) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
