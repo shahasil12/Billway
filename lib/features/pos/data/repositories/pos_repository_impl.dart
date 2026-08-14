@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/error/failure.dart';
 import '../../domain/entities/pos_session.dart';
+import '../../domain/entities/pos_cash_movement.dart';
 import '../../domain/repositories/pos_repository.dart';
 import '../../../invoices/domain/entities/invoice.dart';
 import '../datasources/pos_remote_data_source.dart';
@@ -49,6 +50,16 @@ class POSRepositoryImpl implements POSRepository {
     try {
       final invoice = await remoteDataSource.checkout(checkoutData);
       return Right(invoice);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, POSCashMovement>> recordCashMovement(double amount, String type, String reason) async {
+    try {
+      final movement = await remoteDataSource.recordCashMovement(amount, type, reason);
+      return Right(movement);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

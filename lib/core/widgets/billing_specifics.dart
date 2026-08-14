@@ -10,6 +10,7 @@ class TotalsBlock extends StatelessWidget {
   final double discountAmount;
   final double grandTotal;
   final VoidCallback? onDiscountTap;
+  final String currency;
 
   const TotalsBlock({
     super.key,
@@ -18,6 +19,7 @@ class TotalsBlock extends StatelessWidget {
     this.discountAmount = 0.0,
     required this.grandTotal,
     this.onDiscountTap,
+    this.currency = '\$',
   });
 
   @override
@@ -41,7 +43,7 @@ class TotalsBlock extends StatelessWidget {
                         const Icon(Icons.edit, size: 14, color: AppColors.primary),
                     ],
                   ),
-                  Text('-\$${discountAmount.toStringAsFixed(2)}', 
+                  Text('-$currency${discountAmount.toStringAsFixed(2)}', 
                     style: AppTextStyles.financialLine.copyWith(color: AppColors.success)),
                 ],
               ),
@@ -56,7 +58,7 @@ class TotalsBlock extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('TOTAL', style: AppTextStyles.h2),
-            Text('\$${grandTotal.toStringAsFixed(2)}', style: AppTextStyles.financialTotal),
+            Text('$currency${grandTotal.toStringAsFixed(2)}', style: AppTextStyles.financialTotal),
           ],
         ),
       ],
@@ -70,7 +72,7 @@ class TotalsBlock extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: AppTextStyles.bodyMedium),
-          Text('\$${amount.toStringAsFixed(2)}', style: AppTextStyles.financialLine),
+          Text('$currency${amount.toStringAsFixed(2)}', style: AppTextStyles.financialLine),
         ],
       ),
     );

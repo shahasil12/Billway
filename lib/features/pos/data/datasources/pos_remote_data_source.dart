@@ -1,12 +1,14 @@
 import '../../../../core/network/api_client.dart';
 import '../models/pos_session_model.dart';
 import '../../../../features/invoices/data/models/invoice_model.dart';
+import '../../domain/entities/pos_cash_movement.dart';
 
 abstract class POSRemoteDataSource {
   Future<POSSessionModel?> getCurrentSession();
   Future<POSSessionModel> openSession(double openingCash);
   Future<POSSessionModel> closeSession(String sessionId, double closingCash);
   Future<InvoiceModel> checkout(Map<String, dynamic> checkoutData);
+  Future<POSCashMovement> recordCashMovement(double amount, String type, String reason);
 }
 
 class POSRemoteDataSourceImpl implements POSRemoteDataSource {
@@ -49,5 +51,18 @@ class POSRemoteDataSourceImpl implements POSRemoteDataSource {
       data: checkoutData,
     );
     return InvoiceModel.fromJson(response.data);
+  }
+
+  @override
+  Future<POSCashMovement> recordCashMovement(double amount, String type, String reason) async {
+    final response = await apiClient.dio.post(
+      'pos/sessions/current/cash_movement/',
+      data: {
+        'amount': amount,
+        'movement_type': type,
+        'reason': reason,
+      },
+    );
+    return POSCashMovement.fromJson(response.data);
   }
 }

@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/providers.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   String _statusMessage = 'Waking up the server...';
@@ -37,11 +39,18 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       );
       if (mounted) {
         setState(() {
-          _statusMessage = 'Server ready!';
+          _statusMessage = 'Server ready! Logging in...';
         });
-        // Small delay so user sees "Server ready!"
-        await Future.delayed(const Duration(milliseconds: 500));
-        context.go('/login');
+        
+        // After server is ready, check auto login!
+        await ref.read(authStateProvider.notifier).checkAutoLogin();
+        
+        final authState = ref.read(authStateProvider);
+        if (authState.value != null) {
+          context.go('/');
+        } else {
+          context.go('/login');
+        }
       }
     } catch (e) {
       if (mounted) {

@@ -205,10 +205,40 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     );
   }
 
+  void _showDeleteDialog(BuildContext context, Product product) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Product'),
+        content: Text('Are you sure you want to delete ${product.name}?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final repo = ref.read(productRepositoryProvider);
+              final result = await repo.deleteProduct(product.id!);
+              result.fold(
+                (failure) {
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(failure.message)));
+                },
+                (_) {
+                  ref.read(productListProvider.notifier).fetchProducts(isRefresh: true);
+                }
+              );
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildProductCard(BuildContext context, Product product, String currency) {
     return AppCard(
       padding: EdgeInsets.zero,
       onTap: () => context.push('/products/${product.id}', extra: product),
+      onLongPress: () => _showDeleteDialog(context, product),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

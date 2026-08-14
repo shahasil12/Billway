@@ -165,8 +165,8 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
               ),
               child: const Icon(Icons.receipt, color: AppColors.primary),
             ),
-            title: invoice.customer?.name ?? 'Unknown Customer',
-            subtitle: 'Invoice #${invoice.id} • ${invoice.paymentMethod}',
+            title: invoice.customer == null ? 'POS/INV/${invoice.id}' : (invoice.customer?.name ?? 'Unknown Customer'),
+            subtitle: invoice.customer == null ? 'POS Sale • ${invoice.paymentMethod}' : 'Invoice #${invoice.id} • ${invoice.paymentMethod}',
             trailing: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,

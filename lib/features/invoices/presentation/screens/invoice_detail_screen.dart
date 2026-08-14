@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
+import '../../../../features/auth/domain/entities/user.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'dart:io';
@@ -151,6 +152,8 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final currency = ref.watch(settingsProvider).settings?.currency ?? '\$';
+    final user = ref.watch(authStateProvider).value;
+    final isAdmin = user?.role == UserRole.admin;
     final isTablet = MediaQuery.of(context).size.width >= 600;
     
     return Scaffold(
@@ -169,9 +172,10 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
             onPressed: _isDownloading ? null : _downloadAndOpenPdf,
             tooltip: 'Download PDF',
           ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppColors.error),
-            tooltip: 'Delete Invoice',
+          if (isAdmin)
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: AppColors.error),
+              tooltip: 'Delete Invoice',
             onPressed: () async {
               final confirmed = await showDialog<bool>(
                 context: context,

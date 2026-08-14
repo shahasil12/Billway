@@ -4,6 +4,9 @@ import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../domain/entities/product.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../features/auth/domain/entities/user.dart';
+import '../controllers/product_list_controller.dart';
 
 class ProductDetailScreen extends ConsumerWidget {
   final Product product;
@@ -12,9 +15,46 @@ class ProductDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currency = ref.watch(settingsProvider).settings?.currency ?? '\$';
+    final user = ref.watch(authStateProvider).value;
+    final isAdmin = user?.role == UserRole.admin;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(product.name),
+        actions: [
+          if (isAdmin)
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.redAccent),
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Delete Product'),
+                    content: const Text('Are you sure you want to delete this product?'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, true), 
+                        child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  final success = await ref.read(productListProvider.notifier).deleteProduct(product.id!);
+                  if (success && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Product deleted')));
+                    context.pop();
+                  } else if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(ref.read(productListProvider).error ?? 'Failed to delete')),
+                    );
+                  }
+                }
+              },
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(

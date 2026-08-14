@@ -26,7 +26,7 @@ class UserManagementController extends StateNotifier<AsyncValue<List<User>>> {
         state = AsyncValue.data([newUser, ...state.value!]);
       }
     } catch (e) {
-      throw Exception('Failed to create user: $e');
+      rethrow;
     }
   }
 
@@ -39,7 +39,7 @@ class UserManagementController extends StateNotifier<AsyncValue<List<User>>> {
         );
       }
     } catch (e) {
-      throw Exception('Failed to delete user: $e');
+      rethrow;
     }
   }
 
@@ -52,7 +52,7 @@ class UserManagementController extends StateNotifier<AsyncValue<List<User>>> {
         );
       }
     } catch (e) {
-      throw Exception('Failed to update role: $e');
+      rethrow;
     }
   }
 }

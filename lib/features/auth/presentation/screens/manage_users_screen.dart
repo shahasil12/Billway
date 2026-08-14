@@ -115,9 +115,19 @@ class ManageUsersScreen extends ConsumerWidget {
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(ctx);
-                ref.read(userManagementControllerProvider.notifier).updateUserRole(user.id, selectedRole.name.toUpperCase());
+                try {
+                  await ref.read(userManagementControllerProvider.notifier).updateUserRole(user.id, selectedRole.name.toUpperCase());
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Role updated successfully'), backgroundColor: Colors.green));
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    String message = e.toString().replaceFirst('Exception: ', '');
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
+                  }
+                }
               },
               child: const Text('Save'),
             ),

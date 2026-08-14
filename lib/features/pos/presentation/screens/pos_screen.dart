@@ -10,6 +10,7 @@ import '../../../categories/presentation/controllers/category_list_controller.da
 import '../controllers/pos_cart_controller.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../domain/entities/cart_item.dart';
+import '../../../settings/presentation/controllers/settings_controller.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -57,6 +58,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
   void _showOpenSessionDialog() {
     final controller = TextEditingController();
+    final currency = ref.read(settingsProvider).settings?.currency ?? '\$';
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -74,13 +76,22 @@ class _POSScreenState extends ConsumerState<POSScreen> {
               controller: controller,
               label: 'Opening Cash Amount',
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              prefixIcon: const Icon(Icons.attach_money),
+              prefixIcon: Padding(
+                padding: const EdgeInsets.only(left: AppSpacing.p16, right: AppSpacing.p8),
+                child: Center(
+                  widthFactor: 1,
+                  child: Text(currency, style: AppTextStyles.h3.copyWith(color: AppColors.textSecondary)),
+                ),
+              ),
             ),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () => context.go('/'),
+            onPressed: () {
+              Navigator.pop(context);
+              context.go('/');
+            },
             child: const Text('Cancel & Exit', style: TextStyle(color: AppColors.textSecondary)),
           ),
           PrimaryButton(
@@ -100,6 +111,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
   void _showCloseSessionDialog() {
     final controller = TextEditingController();
+    final currency = ref.read(settingsProvider).settings?.currency ?? '\$';
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -116,7 +128,13 @@ class _POSScreenState extends ConsumerState<POSScreen> {
               controller: controller,
               label: 'Closing Cash Amount',
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              prefixIcon: const Icon(Icons.attach_money),
+              prefixIcon: Padding(
+                padding: const EdgeInsets.only(left: AppSpacing.p16, right: AppSpacing.p8),
+                child: Center(
+                  widthFactor: 1,
+                  child: Text(currency, style: AppTextStyles.h3.copyWith(color: AppColors.textSecondary)),
+                ),
+              ),
             ),
           ],
         ),
@@ -141,8 +159,100 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     );
   }
 
-  void _showCheckoutDialog() {
+  void _showPettyCashDialog() {
+    final amountController = TextEditingController();
+    final reasonController = TextEditingController();
+    String type = 'IN';
+    final currency = ref.read(settingsProvider).settings?.currency ?? '\$';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+          title: Text('Petty Cash', style: AppTextStyles.h2),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: RadioListTile<String>(
+                      title: const Text('Cash In'),
+                      value: 'IN',
+                      groupValue: type,
+                      onChanged: (val) => setState(() => type = val!),
+                      activeColor: AppColors.primary,
+                    ),
+                  ),
+                  Expanded(
+                    child: RadioListTile<String>(
+                      title: const Text('Cash Out'),
+                      value: 'OUT',
+                      groupValue: type,
+                      onChanged: (val) => setState(() => type = val!),
+                      activeColor: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.p16),
+              AppTextField(
+                controller: amountController,
+                label: 'Amount',
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.only(left: AppSpacing.p16, right: AppSpacing.p8),
+                  child: Center(
+                    widthFactor: 1,
+                    child: Text(currency, style: AppTextStyles.h3.copyWith(color: AppColors.textSecondary)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.p16),
+              AppTextField(
+                controller: reasonController,
+                label: 'Reason',
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            PrimaryButton(
+              label: 'Save',
+              onPressed: () async {
+                final amount = double.tryParse(amountController.text) ?? 0;
+                if (amount <= 0 || reasonController.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please enter a valid amount and reason')),
+                  );
+                  return;
+                }
+                
+                final success = await ref.read(posSessionControllerProvider.notifier)
+                    .recordCashMovement(amount, type, reasonController.text.trim());
+                    
+                if (success && mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Cash movement recorded successfully')),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCheckoutDialog({bool fromBottomSheet = false}) {
     final cartState = ref.read(posCartControllerProvider);
+    final currency = ref.read(settingsProvider).settings?.currency ?? '\$';
     final amountController = TextEditingController(text: cartState.grandTotal.toStringAsFixed(2));
     String paymentMethod = 'CASH';
 
@@ -158,7 +268,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
             children: [
               Text('Total Due', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
               const SizedBox(height: AppSpacing.p4),
-              Text('\$${cartState.grandTotal.toStringAsFixed(2)}', style: AppTextStyles.h1.copyWith(color: AppColors.primary)),
+              Text('$currency${cartState.grandTotal.toStringAsFixed(2)}', style: AppTextStyles.h1.copyWith(color: AppColors.primary)),
               const SizedBox(height: AppSpacing.p24),
               
               PaymentMethodSelector(
@@ -171,7 +281,13 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                 controller: amountController,
                 label: 'Amount Paid',
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                prefixIcon: const Icon(Icons.attach_money),
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.only(left: AppSpacing.p16, right: AppSpacing.p8),
+                  child: Center(
+                    widthFactor: 1,
+                    child: Text(currency, style: AppTextStyles.h3.copyWith(color: AppColors.textSecondary)),
+                  ),
+                ),
               ),
             ],
           ),
@@ -188,7 +304,9 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                 final invoice = await ref.read(posCartControllerProvider.notifier).checkout(amount, paymentMethod);
                 if (invoice != null && mounted) {
                   Navigator.pop(context);
+                  if (fromBottomSheet) Navigator.pop(context);
                   ref.read(posCartControllerProvider.notifier).clearCart();
+                  context.push('/invoices/${invoice.id}', extra: invoice);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Sale successful! Invoice #${invoice.id}'),
@@ -211,6 +329,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     final productsState = ref.watch(productListProvider);
     final categoriesState = ref.watch(categoryListProvider);
     final isTablet = MediaQuery.of(context).size.width >= 600;
+    final currency = ref.watch(settingsProvider).settings?.currency ?? '\$';
 
     // When session check finishes and no session found, show dialog once
     if (!sessionState.isLoading && sessionState.session == null && !_dialogShown) {
@@ -259,6 +378,13 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         title: const Text('Point of Sale'),
         actions: [
           Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.p8),
+            child: SecondaryButton(
+              label: 'Petty Cash',
+              onPressed: _showPettyCashDialog,
+            ),
+          ),
+          Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.p16),
             child: SecondaryButton(
               label: 'Close Session',
@@ -268,13 +394,13 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         ],
       ),
       body: isTablet
-          ? _buildTabletLayout(filteredProducts, cartState, categoriesState.categories)
-          : _buildPhoneLayout(filteredProducts, cartState, categoriesState.categories),
+          ? _buildTabletLayout(filteredProducts, cartState, categoriesState.categories, currency)
+          : _buildPhoneLayout(filteredProducts, cartState, categoriesState.categories, currency),
     );
   }
 
 
-  Widget _buildTabletLayout(List<Product> products, POSCartState cartState, List<dynamic> categories) {
+  Widget _buildTabletLayout(List<Product> products, POSCartState cartState, List<dynamic> categories, String currency) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -306,7 +432,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         // PRODUCTS GRID
         Expanded(
           flex: 2,
-          child: _buildProductsGrid(products, 3),
+          child: _buildProductsGrid(products, 3, currency),
         ),
         
         const VerticalDivider(width: 1, color: AppColors.border),
@@ -315,13 +441,13 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         Container(
           width: 350,
           color: AppColors.surface,
-          child: _buildCartSidebar(cartState),
+          child: _buildCartSidebar(cartState, currency),
         ),
       ],
     );
   }
 
-  Widget _buildPhoneLayout(List<Product> products, POSCartState cartState, List<dynamic> categories) {
+  Widget _buildPhoneLayout(List<Product> products, POSCartState cartState, List<dynamic> categories, String currency) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -340,7 +466,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
         const Divider(height: 1, color: AppColors.border),
         // PRODUCTS GRID
         Expanded(
-          child: _buildProductsGrid(products, 2),
+          child: _buildProductsGrid(products, 2, currency),
         ),
         // MINI CART BAR
         Container(
@@ -357,12 +483,12 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text('${cartState.items.length} items', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
-                  Text('\$${cartState.grandTotal.toStringAsFixed(2)}', style: AppTextStyles.h2.copyWith(color: AppColors.primary)),
+                  Text('$currency${cartState.grandTotal.toStringAsFixed(2)}', style: AppTextStyles.h2.copyWith(color: AppColors.primary)),
                 ],
               ),
               PrimaryButton(
                 label: 'View Cart & Pay',
-                onPressed: () => _showPhoneCartSheet(cartState),
+                onPressed: () => _showPhoneCartSheet(cartState, currency),
               ),
             ],
           ),
@@ -406,7 +532,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     );
   }
 
-  Widget _buildProductsGrid(List<Product> products, int crossAxisCount) {
+  Widget _buildProductsGrid(List<Product> products, int crossAxisCount, String currency) {
     return RefreshIndicator(
       onRefresh: () async {
         await ref.read(productListProvider.notifier).fetchProducts(isRefresh: true);
@@ -464,7 +590,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '\$${p.price.toStringAsFixed(2)}',
+                          '$currency${p.price.toStringAsFixed(2)}',
                           style: AppTextStyles.bodyLarge.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700),
                         ),
                       ],
@@ -480,7 +606,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   }
 
 
-  Widget _buildCartSidebar(POSCartState cartState) {
+  Widget _buildCartSidebar(POSCartState cartState, String currency, {bool fromBottomSheet = false}) {
     return Column(
       children: [
         Container(
@@ -520,26 +646,21 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                               children: [
                                 Text(item.product.name, style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
                                 const SizedBox(height: 4),
-                                Text('\$${item.unitPrice.toStringAsFixed(2)}', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                                Text('$currency${item.unitPrice.toStringAsFixed(2)}', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
                               ],
                             ),
                           ),
                           QuantityStepper(
                             value: item.quantity,
                             onChanged: (val) {
-                              if (val > 0) {
-                                ref.read(posCartControllerProvider.notifier).updateQuantity(item.product.id!, val);
-                              } else {
-                                // removing item handling if quantity is 0? The pos controller might handle it, or I can do:
-                                // but steppers usually prevent going to 0 unless specifically built for it.
-                              }
+                              ref.read(posCartControllerProvider.notifier).updateQuantity(item.product.id!, val);
                             },
                           ),
                           const SizedBox(width: AppSpacing.p12),
                           SizedBox(
                             width: 60,
                             child: Text(
-                              '\$${(item.unitPrice * item.quantity).toStringAsFixed(2)}', 
+                              '$currency${(item.unitPrice * item.quantity).toStringAsFixed(2)}', 
                               style: AppTextStyles.financialLine.copyWith(fontWeight: FontWeight.w700),
                               textAlign: TextAlign.right,
                             ),
@@ -558,18 +679,49 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           padding: const EdgeInsets.all(AppSpacing.p16),
           child: Column(
             children: [
+              DropdownButtonFormField<int?>(
+                value: cartState.customer?.id,
+                decoration: const InputDecoration(
+                  labelText: 'Customer',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                items: [
+                  const DropdownMenuItem<int?>(
+                    value: null,
+                    child: Text('Walk-in Customer'),
+                  ),
+                  ...ref.watch(customerListProvider).customers.map((c) {
+                    return DropdownMenuItem<int?>(
+                      value: c.id,
+                      child: Text(c.name),
+                    );
+                  }),
+                ],
+                onChanged: (val) {
+                  if (val == null) {
+                    ref.read(posCartControllerProvider.notifier).clearCustomer();
+                  } else {
+                    final customer = ref.read(customerListProvider).customers.firstWhere((c) => c.id == val);
+                    ref.read(posCartControllerProvider.notifier).setCustomer(customer);
+                  }
+                },
+              ),
+              const SizedBox(height: AppSpacing.p16),
               TotalsBlock(
                 subtotal: cartState.subtotal,
                 discountAmount: cartState.discountAmount,
                 taxTotal: cartState.taxTotal,
                 grandTotal: cartState.grandTotal,
-              ),const SizedBox(height: AppSpacing.p16),
+                currency: currency,
+              ),
+              const SizedBox(height: AppSpacing.p16),
               SizedBox(
                 width: double.infinity,
                 child: PrimaryButton(
                   isLarge: true,
                   label: 'Pay Now',
-                  onPressed: cartState.items.isEmpty ? null : _showCheckoutDialog,
+                  onPressed: cartState.items.isEmpty ? null : () => _showCheckoutDialog(fromBottomSheet: fromBottomSheet),
                 ),
               ),
             ],
@@ -579,39 +731,44 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     );
   }
   
-  void _showPhoneCartSheet(POSCartState cartState) {
+  void _showPhoneCartSheet(POSCartState initialCartState, String currency) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.8,
-          decoration: const BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
-          ),
-          child: SafeArea(
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(AppSpacing.p16),
-                  decoration: const BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Cart', style: AppTextStyles.h2),
-                      IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-                    ],
-                  ),
+        return Consumer(
+          builder: (context, ref, child) {
+            final cartState = ref.watch(posCartControllerProvider);
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.8,
+              decoration: const BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+              ),
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(AppSpacing.p16),
+                      decoration: const BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Cart', style: AppTextStyles.h2),
+                          IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                        ],
+                      ),
+                    ),
+                    Expanded(child: _buildCartSidebar(cartState, currency, fromBottomSheet: true)),
+                  ],
                 ),
-                Expanded(child: _buildCartSidebar(cartState)),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );

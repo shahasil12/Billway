@@ -14,6 +14,7 @@ import '../../../../core/providers.dart';
 import '../../../../features/auth/domain/entities/user.dart';
 import '../../../../features/pos/presentation/providers/pos_providers.dart';
 import '../../../../features/pos/domain/entities/pos_session.dart';
+import '../../../../features/settings/presentation/controllers/settings_controller.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -24,6 +25,7 @@ class DashboardScreen extends ConsumerWidget {
     final user = ref.watch(authStateProvider).value;
     final posSessionState = ref.watch(posSessionControllerProvider);
     final isTablet = MediaQuery.of(context).size.width >= 600;
+    final currency = ref.watch(settingsProvider).settings?.currency ?? '\$';
 
     return Scaffold(
       appBar: AppBar(
@@ -39,24 +41,24 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
       body: summaryAsync.when(
-        data: (summary) => _buildBody(context, ref, summary, user, posSessionState, isTablet),
+        data: (summary) => _buildBody(context, ref, summary, user, posSessionState, isTablet, currency),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('Error: $err')),
       ),
     );
   }
 
-  Widget _buildBody(BuildContext context, WidgetRef ref, DashboardSummary summary, dynamic user, dynamic posSessionState, bool isTablet) {
+  Widget _buildBody(BuildContext context, WidgetRef ref, DashboardSummary summary, dynamic user, dynamic posSessionState, bool isTablet, String currency) {
     final children = [
-      _buildSummaryCards(context, summary, isTablet),
+      _buildSummaryCards(context, summary, isTablet, currency),
       const SizedBox(height: AppSpacing.p24),
       if (!posSessionState.isLoading && posSessionState.session != null) ...[
-        _buildActiveSessionBanner(context, posSessionState.session),
+        _buildActiveSessionBanner(context, posSessionState.session, currency),
         const SizedBox(height: AppSpacing.p24),
       ],
       _buildQuickActions(context, user, isTablet),
       const SizedBox(height: AppSpacing.p24),
-      _buildRecentInvoices(context, summary.recentInvoices),
+      _buildRecentInvoices(context, summary.recentInvoices, currency),
       const SizedBox(height: AppSpacing.p32),
     ];
 
@@ -76,9 +78,9 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSummaryCards(BuildContext context, DashboardSummary summary, bool isTablet) {
+  Widget _buildSummaryCards(BuildContext context, DashboardSummary summary, bool isTablet, String currency) {
     final cards = [
-      _StatCard(title: 'Sales Today', value: '\$${summary.todaysSales.toStringAsFixed(2)}', icon: Icons.trending_up, color: AppColors.primary),
+      _StatCard(title: 'Sales Today', value: '$currency${summary.todaysSales.toStringAsFixed(2)}', icon: Icons.trending_up, color: AppColors.primary),
       _StatCard(title: 'Invoices Today', value: '${summary.todaysInvoiceCount}', icon: Icons.receipt_long, color: AppColors.secondary),
       _StatCard(title: 'Customers', value: '${summary.totalCustomers}', icon: Icons.people_alt, color: AppColors.success),
       _StatCard(title: 'Products', value: '${summary.totalProducts}', icon: Icons.inventory_2, color: AppColors.warning),
@@ -125,7 +127,7 @@ class DashboardScreen extends ConsumerWidget {
 
 
 
-  Widget _buildRecentInvoices(BuildContext context, List<RecentInvoice> invoices) {
+  Widget _buildRecentInvoices(BuildContext context, List<RecentInvoice> invoices, String currency) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -144,10 +146,25 @@ class DashboardScreen extends ConsumerWidget {
           padding: EdgeInsets.zero,
           child: Column(
             children: invoices.map((inv) => ListRow(
-              title: inv.customerName,
-              subtitle: 'Invoice #${inv.id}',
-              trailing: Text('\$${inv.totalAmount.toStringAsFixed(2)}', style: AppTextStyles.financialLine),
-              onTap: () => context.go('/invoices/${inv.id}'), // Or proper route
+              title: inv.customerName == 'Unknown' ? 'POS/INV/${inv.id}' : inv.customerName,
+              subtitle: inv.customerName == 'Unknown' ? 'POS Sale' : 'Invoice #${inv.id}',
+              trailing: Text('$currency${inv.totalAmount.toStringAsFixed(2)}', style: AppTextStyles.financialLine),
+              onTap: () async {
+                final repo = ref.read(invoiceRepositoryProvider);
+                final result = await repo.getInvoice(inv.id!);
+                result.fold(
+                  (failure) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(failure.message)));
+                    }
+                  },
+                  (invoice) {
+                    if (context.mounted) {
+                      context.push('/invoices/${invoice.id}', extra: invoice);
+                    }
+                  }
+                );
+              },
             )).toList(),
           ),
         ),
@@ -155,7 +172,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildActiveSessionBanner(BuildContext context, POSSession session) {
+  Widget _buildActiveSessionBanner(BuildContext context, POSSession session, String currency) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.p16),
       decoration: BoxDecoration(
@@ -177,7 +194,7 @@ class DashboardScreen extends ConsumerWidget {
               children: [
                 Text('Active POS Session', style: AppTextStyles.h3.copyWith(color: AppColors.primary)),
                 const SizedBox(height: 4),
-                Text('Opened with \$${session.openingCash.toStringAsFixed(2)}', style: AppTextStyles.bodyMedium),
+                Text('Opened with $currency${session.openingCash.toStringAsFixed(2)}', style: AppTextStyles.bodyMedium),
               ],
             ),
           ),

@@ -21,6 +21,8 @@ class UserManagementRepository {
         throw Exception('Unexpected response format');
       }
       throw Exception('Failed to load users');
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessage(e.response?.data) ?? 'Network error: ${e.message}');
     } catch (e) {
       throw Exception('Error loading users: $e');
     }
@@ -36,6 +38,8 @@ class UserManagementRepository {
         return UserModel.fromJson(response.data);
       }
       throw Exception('Failed to create user: ${response.data}');
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessage(e.response?.data) ?? 'Network error: ${e.message}');
     } catch (e) {
       throw Exception('Error creating user: $e');
     }
@@ -47,6 +51,8 @@ class UserManagementRepository {
       if (response.statusCode != 204) {
         throw Exception('Failed to delete user');
       }
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessage(e.response?.data) ?? 'Network error: ${e.message}');
     } catch (e) {
       throw Exception('Error deleting user: $e');
     }
@@ -59,8 +65,28 @@ class UserManagementRepository {
         return UserModel.fromJson(response.data);
       }
       throw Exception('Failed to update role: ${response.data}');
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessage(e.response?.data) ?? 'Network error: ${e.message}');
     } catch (e) {
       throw Exception('Error updating role: $e');
     }
+  }
+
+  String? _extractErrorMessage(dynamic data) {
+    if (data == null) return null;
+    if (data is Map<String, dynamic>) {
+      if (data.containsKey('detail')) return data['detail'].toString();
+      // Handle Django REST framework field errors
+      final errors = <String>[];
+      data.forEach((key, value) {
+        if (value is List) {
+          errors.add('$key: ${value.join(", ")}');
+        } else {
+          errors.add('$key: $value');
+        }
+      });
+      if (errors.isNotEmpty) return errors.join('\n');
+    }
+    return data.toString();
   }
 }

@@ -81,6 +81,23 @@ class InvoiceListController extends StateNotifier<InvoiceListState> {
     state = state.copyWith(searchQuery: query);
     fetchInvoices(isRefresh: true);
   }
+
+  Future<bool> deleteInvoice(int id) async {
+    final repository = ref.read(invoiceRepositoryProvider);
+    final result = await repository.deleteInvoice(id);
+    return result.fold(
+      (failure) {
+        state = state.copyWith(error: failure.message);
+        return false;
+      },
+      (_) {
+        state = state.copyWith(
+          invoices: state.invoices.where((i) => i.id != id).toList(),
+        );
+        return true;
+      },
+    );
+  }
 }
 
 final invoiceListProvider = StateNotifierProvider<InvoiceListController, InvoiceListState>((ref) {

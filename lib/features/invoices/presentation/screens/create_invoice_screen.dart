@@ -461,6 +461,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
             discountAmount: _calculatedDiscount,
             taxTotal: _calculatedTax,
             grandTotal: _calculatedGrandTotal,
+            currency: currency,
           ),
           const SizedBox(height: AppSpacing.p16),
           SizedBox(

@@ -71,7 +71,9 @@ class POSCartController extends StateNotifier<POSCartState> {
     
     if (existingIndex >= 0) {
       final updatedItems = List<CartItem>.from(state.items);
-      updatedItems[existingIndex].quantity += 1;
+      updatedItems[existingIndex] = updatedItems[existingIndex].copyWith(
+        quantity: updatedItems[existingIndex].quantity + 1
+      );
       state = state.copyWith(items: updatedItems);
     } else {
       state = state.copyWith(
@@ -89,7 +91,7 @@ class POSCartController extends StateNotifier<POSCartState> {
     final existingIndex = state.items.indexWhere((item) => item.product.id == productId);
     if (existingIndex >= 0) {
       final updatedItems = List<CartItem>.from(state.items);
-      updatedItems[existingIndex].quantity = quantity;
+      updatedItems[existingIndex] = updatedItems[existingIndex].copyWith(quantity: quantity);
       state = state.copyWith(items: updatedItems);
     }
   }

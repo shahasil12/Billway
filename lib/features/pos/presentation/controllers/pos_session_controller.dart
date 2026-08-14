@@ -84,4 +84,20 @@ class POSSessionController extends StateNotifier<POSSessionState> {
       },
     );
   }
+
+  Future<bool> recordCashMovement(double amount, String type, String reason) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    final result = await _repository.recordCashMovement(amount, type, reason);
+    
+    return result.fold(
+      (failure) {
+        state = state.copyWith(isLoading: false, error: failure.message);
+        return false;
+      },
+      (movement) {
+        state = state.copyWith(isLoading: false);
+        return true;
+      },
+    );
+  }
 }

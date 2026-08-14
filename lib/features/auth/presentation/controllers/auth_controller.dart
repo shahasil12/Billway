@@ -5,9 +5,7 @@ import '../../domain/entities/user.dart';
 class AuthController extends StateNotifier<AsyncValue<User?>> {
   final AuthRepository _repository;
 
-  AuthController(this._repository) : super(const AsyncValue.loading()) {
-    checkAutoLogin();
-  }
+  AuthController(this._repository) : super(const AsyncValue.data(null));
 
   Future<void> checkAutoLogin() async {
     final success = await _repository.autoLogin();
