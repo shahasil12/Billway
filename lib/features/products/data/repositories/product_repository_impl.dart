@@ -1,22 +1,32 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/sync/sync_service.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../datasources/product_remote_data_source.dart';
+import '../datasources/product_local_data_source.dart';
+import '../models/product_model.dart';
 
 class ProductRepositoryImpl implements ProductRepository {
   final ProductRemoteDataSource remoteDataSource;
+  final ProductLocalDataSource localDataSource;
+  final SyncService syncService;
 
-  ProductRepositoryImpl(this.remoteDataSource);
+  ProductRepositoryImpl(this.remoteDataSource, this.localDataSource, this.syncService);
 
   @override
   Future<Either<Failure, PaginatedProducts>> getProducts({int page = 1, String? search, int? categoryId}) async {
     try {
-      final products = await remoteDataSource.getProducts(page, search, categoryId);
-      return Right(products);
-    } on DioException catch (e) {
-      return Left(ServerFailure(e.message ?? 'Server error'));
+      final localProducts = await localDataSource.getProducts(search: search, categoryId: categoryId);
+      
+      try {
+        final remoteProducts = await remoteDataSource.getProducts(page, search, categoryId);
+        await localDataSource.upsertProducts(remoteProducts.results as List<ProductModel>);
+        return Right(remoteProducts);
+      } catch (e) {
+        return Right(PaginatedProductsModel(count: localProducts.length, results: localProducts));
+      }
     } catch (e) {
       return const Left(ServerFailure('Failed to fetch products'));
     }
@@ -25,8 +35,20 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Either<Failure, Product>> getProduct(int id) async {
     try {
-      final product = await remoteDataSource.getProduct(id);
-      return Right(product);
+      final localProduct = await localDataSource.getProduct(id);
+      if (localProduct != null) {
+        try {
+          final remoteProduct = await remoteDataSource.getProduct(id);
+          await localDataSource.upsertProducts([remoteProduct]);
+          return Right(remoteProduct);
+        } catch (e) {
+          return Right(localProduct);
+        }
+      } else {
+        final remoteProduct = await remoteDataSource.getProduct(id);
+        await localDataSource.upsertProducts([remoteProduct]);
+        return Right(remoteProduct);
+      }
     } catch (e) {
       return const Left(ServerFailure('Failed to get product'));
     }
@@ -35,15 +57,24 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Either<Failure, Product>> createProduct(Product product, {String? imagePath}) async {
     try {
-      final newProduct = await remoteDataSource.createProduct(product, imagePath: imagePath);
-      return Right(newProduct);
-    } on DioException catch (e) {
-       final errors = e.response?.data;
-       String message = 'Failed to create product';
-       if (errors is Map) {
-         message = errors.values.first.toString();
-       }
-       return Left(ServerFailure(message));
+      // Local image handling for offline is complex, we just save the textual data for sync
+      final model = ProductModel(
+        name: product.name,
+        categoryId: product.categoryId,
+        categoryName: product.categoryName,
+        price: product.price,
+        taxPercentage: product.taxPercentage,
+        barcode: product.barcode,
+        description: product.description,
+        stock: product.stock,
+        status: product.status,
+      );
+      
+      final localProduct = await localDataSource.createProduct(model);
+      
+      await syncService.addToQueue('CREATE', 'PRODUCT', localProduct.toJson(), localId: localProduct.id);
+      
+      return Right(localProduct);
     } catch (e) {
       return const Left(ServerFailure('Failed to create product'));
     }
@@ -52,15 +83,24 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Either<Failure, Product>> updateProduct(Product product, {String? imagePath}) async {
     try {
-      final updatedProduct = await remoteDataSource.updateProduct(product, imagePath: imagePath);
-      return Right(updatedProduct);
-    } on DioException catch (e) {
-       final errors = e.response?.data;
-       String message = 'Failed to update product';
-       if (errors is Map) {
-         message = errors.values.first.toString();
-       }
-       return Left(ServerFailure(message));
+      final model = ProductModel(
+        id: product.id,
+        name: product.name,
+        categoryId: product.categoryId,
+        categoryName: product.categoryName,
+        price: product.price,
+        taxPercentage: product.taxPercentage,
+        barcode: product.barcode,
+        description: product.description,
+        stock: product.stock,
+        status: product.status,
+      );
+      
+      final updatedLocal = await localDataSource.updateProduct(model);
+      
+      await syncService.addToQueue('UPDATE', 'PRODUCT', updatedLocal.toJson());
+      
+      return Right(updatedLocal);
     } catch (e) {
       return const Left(ServerFailure('Failed to update product'));
     }
@@ -69,13 +109,10 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Either<Failure, void>> deleteProduct(int id) async {
     try {
-      await remoteDataSource.deleteProduct(id);
+      await localDataSource.deleteProduct(id);
+      await syncService.addToQueue('DELETE', 'PRODUCT', {'id': id});
+      
       return const Right(null);
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 400 && e.response?.data['detail'] != null) {
-        return Left(ServerFailure(e.response!.data['detail']));
-      }
-      return const Left(ServerFailure('Failed to delete product'));
     } catch (e) {
       return const Left(ServerFailure('Failed to delete product'));
     }

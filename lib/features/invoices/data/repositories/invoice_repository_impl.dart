@@ -1,22 +1,32 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/sync/sync_service.dart';
 import '../../domain/entities/invoice.dart';
 import '../../domain/repositories/invoice_repository.dart';
 import '../datasources/invoice_remote_data_source.dart';
+import '../datasources/invoice_local_data_source.dart';
+import '../models/invoice_model.dart';
 
 class InvoiceRepositoryImpl implements InvoiceRepository {
   final InvoiceRemoteDataSource remoteDataSource;
+  final InvoiceLocalDataSource localDataSource;
+  final SyncService syncService;
 
-  InvoiceRepositoryImpl(this.remoteDataSource);
+  InvoiceRepositoryImpl(this.remoteDataSource, this.localDataSource, this.syncService);
 
   @override
   Future<Either<Failure, PaginatedInvoices>> getInvoices({int page = 1, String? search}) async {
     try {
-      final invoices = await remoteDataSource.getInvoices(page, search);
-      return Right(invoices);
-    } on DioException catch (e) {
-      return Left(ServerFailure(e.message ?? 'Server error'));
+      final localInvoices = await localDataSource.getInvoices(search: search);
+      
+      try {
+        final remoteInvoices = await remoteDataSource.getInvoices(page, search);
+        await localDataSource.upsertInvoices(remoteInvoices.results as List<InvoiceModel>);
+        return Right(remoteInvoices);
+      } catch (e) {
+        return Right(PaginatedInvoicesModel(count: localInvoices.length, results: localInvoices));
+      }
     } catch (e) {
       return const Left(ServerFailure('Failed to fetch invoices'));
     }
@@ -25,8 +35,20 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
   @override
   Future<Either<Failure, Invoice>> getInvoice(int id) async {
     try {
-      final invoice = await remoteDataSource.getInvoice(id);
-      return Right(invoice);
+      final localInvoice = await localDataSource.getInvoice(id);
+      if (localInvoice != null) {
+        try {
+          final remoteInvoice = await remoteDataSource.getInvoice(id);
+          await localDataSource.upsertInvoices([remoteInvoice]);
+          return Right(remoteInvoice);
+        } catch (e) {
+          return Right(localInvoice);
+        }
+      } else {
+        final remoteInvoice = await remoteDataSource.getInvoice(id);
+        await localDataSource.upsertInvoices([remoteInvoice]);
+        return Right(remoteInvoice);
+      }
     } catch (e) {
       return const Left(ServerFailure('Failed to get invoice'));
     }
@@ -35,25 +57,26 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
   @override
   Future<Either<Failure, Invoice>> createInvoice(Invoice invoice) async {
     try {
-      final newInvoice = await remoteDataSource.createInvoice(invoice);
-      return Right(newInvoice);
-    } on DioException catch (e) {
-       final errors = e.response?.data;
-       String message = 'Failed to create invoice';
-       if (errors is List && errors.isNotEmpty) {
-           message = errors[0].toString();
-       } else if (errors is Map) {
-         if (errors.containsKey('detail')) {
-            message = errors['detail'].toString();
-         } else if (errors.containsKey('items') && errors['items'] is List) {
-             message = errors['items'][0].toString();
-         } else if (errors.containsKey('non_field_errors') && errors['non_field_errors'] is List) {
-             message = errors['non_field_errors'][0].toString();
-         } else {
-            message = errors.values.first.toString();
-         }
-       }
-       return Left(ServerFailure(message));
+      final model = InvoiceModel(
+        customerId: invoice.customerId,
+        reference: invoice.reference,
+        subtotal: invoice.subtotal,
+        discountPercentage: invoice.discountPercentage,
+        discountAmount: invoice.discountAmount,
+        taxTotal: invoice.taxTotal,
+        grandTotal: invoice.grandTotal,
+        amountPaid: invoice.amountPaid,
+        balanceDue: invoice.balanceDue,
+        paymentMethod: invoice.paymentMethod,
+        status: invoice.status,
+        items: invoice.items,
+      );
+      
+      final localInvoice = await localDataSource.createInvoice(model);
+      
+      await syncService.addToQueue('CREATE', 'INVOICE', localInvoice.toJson(), localId: localInvoice.id);
+      
+      return Right(localInvoice);
     } catch (e) {
       return const Left(ServerFailure('Failed to create invoice'));
     }
@@ -62,7 +85,9 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
   @override
   Future<Either<Failure, void>> deleteInvoice(int id) async {
     try {
-      await remoteDataSource.deleteInvoice(id);
+      await localDataSource.deleteInvoice(id);
+      await syncService.addToQueue('DELETE', 'INVOICE', {'id': id});
+      
       return const Right(null);
     } catch (e) {
       return const Left(ServerFailure('Failed to delete invoice'));

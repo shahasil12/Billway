@@ -4,6 +4,11 @@ import '../features/auth/presentation/controllers/user_management_controller.dar
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'network/api_client.dart';
+import 'database/database_helper.dart';
+import 'sync/sync_service.dart';
+import '../features/customers/data/datasources/customer_local_data_source.dart';
+import '../features/products/data/datasources/product_local_data_source.dart';
+import '../features/invoices/data/datasources/invoice_local_data_source.dart';
 import '../features/auth/data/datasources/auth_local_data_source.dart';
 import '../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../features/auth/data/repositories/auth_repository_impl.dart';
@@ -45,6 +50,17 @@ final dioProvider = Provider<Dio>((ref) {
 
 final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient(ref.read(dioProvider), ref.read(secureStorageProvider));
+});
+
+final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
+  return DatabaseHelper.instance;
+});
+
+final syncServiceProvider = Provider<SyncService>((ref) {
+  return SyncService(
+    dbHelper: ref.read(databaseHelperProvider),
+    apiClient: ref.read(apiClientProvider),
+  );
 });
 
 final authLocalDataSourceProvider = Provider<AuthLocalDataSource>((ref) {
@@ -93,8 +109,16 @@ final customerRemoteDataSourceProvider = Provider<CustomerRemoteDataSource>((ref
   return CustomerRemoteDataSourceImpl(ref.read(apiClientProvider));
 });
 
+final customerLocalDataSourceProvider = Provider<CustomerLocalDataSource>((ref) {
+  return CustomerLocalDataSourceImpl(dbHelper: ref.read(databaseHelperProvider));
+});
+
 final customerRepositoryProvider = Provider<CustomerRepository>((ref) {
-  return CustomerRepositoryImpl(ref.read(customerRemoteDataSourceProvider));
+  return CustomerRepositoryImpl(
+    ref.read(customerRemoteDataSourceProvider),
+    ref.read(customerLocalDataSourceProvider),
+    ref.read(syncServiceProvider),
+  );
 });
 
 // Category Providers
@@ -111,8 +135,16 @@ final productRemoteDataSourceProvider = Provider<ProductRemoteDataSource>((ref) 
   return ProductRemoteDataSourceImpl(ref.read(apiClientProvider));
 });
 
+final productLocalDataSourceProvider = Provider<ProductLocalDataSource>((ref) {
+  return ProductLocalDataSourceImpl(dbHelper: ref.read(databaseHelperProvider));
+});
+
 final productRepositoryProvider = Provider<ProductRepository>((ref) {
-  return ProductRepositoryImpl(ref.read(productRemoteDataSourceProvider));
+  return ProductRepositoryImpl(
+    ref.read(productRemoteDataSourceProvider),
+    ref.read(productLocalDataSourceProvider),
+    ref.read(syncServiceProvider),
+  );
 });
 
 // Invoice Providers
@@ -120,8 +152,16 @@ final invoiceRemoteDataSourceProvider = Provider<InvoiceRemoteDataSource>((ref) 
   return InvoiceRemoteDataSourceImpl(ref.read(apiClientProvider));
 });
 
+final invoiceLocalDataSourceProvider = Provider<InvoiceLocalDataSource>((ref) {
+  return InvoiceLocalDataSourceImpl(dbHelper: ref.read(databaseHelperProvider));
+});
+
 final invoiceRepositoryProvider = Provider<InvoiceRepository>((ref) {
-  return InvoiceRepositoryImpl(ref.read(invoiceRemoteDataSourceProvider));
+  return InvoiceRepositoryImpl(
+    ref.read(invoiceRemoteDataSourceProvider),
+    ref.read(invoiceLocalDataSourceProvider),
+    ref.read(syncServiceProvider),
+  );
 });
 
 // Payment Providers

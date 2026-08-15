@@ -1,22 +1,33 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/sync/sync_service.dart';
 import '../../domain/entities/customer.dart';
 import '../../domain/repositories/customer_repository.dart';
 import '../datasources/customer_remote_data_source.dart';
+import '../datasources/customer_local_data_source.dart';
+import '../models/customer_model.dart';
 
 class CustomerRepositoryImpl implements CustomerRepository {
   final CustomerRemoteDataSource remoteDataSource;
+  final CustomerLocalDataSource localDataSource;
+  final SyncService syncService;
 
-  CustomerRepositoryImpl(this.remoteDataSource);
+  CustomerRepositoryImpl(this.remoteDataSource, this.localDataSource, this.syncService);
 
   @override
   Future<Either<Failure, PaginatedCustomers>> getCustomers({int page = 1, String? search}) async {
     try {
-      final customers = await remoteDataSource.getCustomers(page, search);
-      return Right(customers);
-    } on DioException catch (e) {
-      return Left(ServerFailure(e.message ?? 'Server error'));
+      final localCustomers = await localDataSource.getCustomers(search: search);
+      
+      try {
+        final remoteCustomers = await remoteDataSource.getCustomers(page, search);
+        await localDataSource.upsertCustomers(remoteCustomers.results as List<CustomerModel>);
+        return Right(remoteCustomers);
+      } catch (e) {
+        // Offline: Return local data
+        return Right(PaginatedCustomersModel(count: localCustomers.length, results: localCustomers));
+      }
     } catch (e) {
       return const Left(ServerFailure('Failed to fetch customers'));
     }
@@ -25,8 +36,20 @@ class CustomerRepositoryImpl implements CustomerRepository {
   @override
   Future<Either<Failure, Customer>> getCustomer(int id) async {
     try {
-      final customer = await remoteDataSource.getCustomer(id);
-      return Right(customer);
+      final localCustomer = await localDataSource.getCustomer(id);
+      if (localCustomer != null) {
+        try {
+          final remoteCustomer = await remoteDataSource.getCustomer(id);
+          await localDataSource.upsertCustomers([remoteCustomer]);
+          return Right(remoteCustomer);
+        } catch (e) {
+          return Right(localCustomer);
+        }
+      } else {
+        final remoteCustomer = await remoteDataSource.getCustomer(id);
+        await localDataSource.upsertCustomers([remoteCustomer]);
+        return Right(remoteCustomer);
+      }
     } catch (e) {
       return const Left(ServerFailure('Failed to get customer'));
     }
@@ -35,15 +58,12 @@ class CustomerRepositoryImpl implements CustomerRepository {
   @override
   Future<Either<Failure, Customer>> createCustomer(Customer customer) async {
     try {
-      final newCustomer = await remoteDataSource.createCustomer(customer);
-      return Right(newCustomer);
-    } on DioException catch (e) {
-       final errors = e.response?.data;
-       String message = 'Failed to create customer';
-       if (errors is Map) {
-         message = errors.values.first.toString();
-       }
-       return Left(ServerFailure(message));
+      final model = CustomerModel(name: customer.name, email: customer.email, phone: customer.phone);
+      final localCustomer = await localDataSource.createCustomer(model);
+      
+      await syncService.addToQueue('CREATE', 'CUSTOMER', localCustomer.toJson(), localId: localCustomer.id);
+      
+      return Right(localCustomer);
     } catch (e) {
       return const Left(ServerFailure('Failed to create customer'));
     }
@@ -52,15 +72,12 @@ class CustomerRepositoryImpl implements CustomerRepository {
   @override
   Future<Either<Failure, Customer>> updateCustomer(Customer customer) async {
     try {
-      final updatedCustomer = await remoteDataSource.updateCustomer(customer);
-      return Right(updatedCustomer);
-    } on DioException catch (e) {
-       final errors = e.response?.data;
-       String message = 'Failed to update customer';
-       if (errors is Map) {
-         message = errors.values.first.toString();
-       }
-       return Left(ServerFailure(message));
+      final model = CustomerModel(id: customer.id, name: customer.name, email: customer.email, phone: customer.phone);
+      final updatedLocal = await localDataSource.updateCustomer(model);
+      
+      await syncService.addToQueue('UPDATE', 'CUSTOMER', updatedLocal.toJson());
+      
+      return Right(updatedLocal);
     } catch (e) {
       return const Left(ServerFailure('Failed to update customer'));
     }
@@ -69,13 +86,10 @@ class CustomerRepositoryImpl implements CustomerRepository {
   @override
   Future<Either<Failure, void>> deleteCustomer(int id) async {
     try {
-      await remoteDataSource.deleteCustomer(id);
+      await localDataSource.deleteCustomer(id);
+      await syncService.addToQueue('DELETE', 'CUSTOMER', {'id': id});
+      
       return const Right(null);
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 400 && e.response?.data['detail'] != null) {
-        return Left(ServerFailure(e.response!.data['detail']));
-      }
-      return const Left(ServerFailure('Failed to delete customer'));
     } catch (e) {
       return const Left(ServerFailure('Failed to delete customer'));
     }
