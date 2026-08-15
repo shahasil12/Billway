@@ -110,7 +110,10 @@ class InvoiceLocalDataSourceImpl implements InvoiceLocalDataSource {
   Future<InvoiceModel> createInvoice(InvoiceModel invoice) async {
     final db = await dbHelper.database;
     
-    final itemsList = invoice.items.map((e) => (e as InvoiceItemModel).toJson()).toList();
+    final itemsList = invoice.items.map((e) => {
+      'product': e.productId,
+      'quantity': e.quantity,
+    }).toList();
     
     final data = {
       'id': invoice.id,
@@ -154,7 +157,10 @@ class InvoiceLocalDataSourceImpl implements InvoiceLocalDataSource {
   Future<InvoiceModel> updateInvoice(InvoiceModel invoice) async {
     final db = await dbHelper.database;
     
-    final itemsList = invoice.items.map((e) => (e as InvoiceItemModel).toJson()).toList();
+    final itemsList = invoice.items.map((e) => {
+      'product': e.productId,
+      'quantity': e.quantity,
+    }).toList();
 
     final data = {
       'customer_id': invoice.customerId,
@@ -199,7 +205,10 @@ class InvoiceLocalDataSourceImpl implements InvoiceLocalDataSource {
     for (var invoice in invoices) {
       if (invoice.id == null) continue;
       
-      final itemsList = invoice.items.map((e) => (e as InvoiceItemModel).toJson()).toList();
+      final itemsList = invoice.items.map((e) => {
+        'product': e.productId,
+        'quantity': e.quantity,
+      }).toList();
 
       batch.insert(
         'invoices',

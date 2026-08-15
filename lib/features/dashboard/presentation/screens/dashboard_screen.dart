@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -27,23 +28,51 @@ class DashboardScreen extends ConsumerWidget {
     final isTablet = MediaQuery.of(context).size.width >= 600;
     final currency = ref.watch(settingsProvider).settings?.currency ?? '\$';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await ref.read(authStateProvider.notifier).logout();
-              if (context.mounted) context.go('/login');
-            },
-          ),
-        ],
-      ),
-      body: summaryAsync.when(
-        data: (summary) => _buildBody(context, ref, summary, user, posSessionState, isTablet, currency),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Error: $err')),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final bool? shouldPop = await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Exit App'),
+              content: const Text('Are you sure you want to exit the app?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Exit', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            );
+          },
+        );
+        if (shouldPop ?? false) {
+           SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Dashboard'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () async {
+                await ref.read(authStateProvider.notifier).logout();
+                if (context.mounted) context.go('/login');
+              },
+            ),
+          ],
+        ),
+        body: summaryAsync.when(
+          data: (summary) => _buildBody(context, ref, summary, user, posSessionState, isTablet, currency),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, _) => Center(child: Text('Error: $err')),
+        ),
       ),
     );
   }

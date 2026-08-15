@@ -84,7 +84,10 @@ class InvoiceModel extends Invoice {
       'reference': reference,
       'discount_percentage': discountPercentage,
       'payment_method': paymentMethod,
-      'items': items.map((i) => (i as InvoiceItemModel).toJson()).toList(),
+      'items': items.map((i) => {
+        'product': i.productId,
+        'quantity': i.quantity,
+      }).toList(),
     };
   }
 }

@@ -3,6 +3,7 @@ import '../../domain/entities/cart_item.dart';
 import '../../../products/domain/entities/product.dart';
 import '../../../customers/domain/entities/customer.dart';
 import '../../domain/repositories/pos_repository.dart';
+import '../../../invoices/domain/repositories/invoice_repository.dart';
 import '../../../invoices/domain/entities/invoice.dart';
 
 class POSCartState {
@@ -62,9 +63,9 @@ class POSCartState {
 }
 
 class POSCartController extends StateNotifier<POSCartState> {
-  final POSRepository _repository;
+  final InvoiceRepository _invoiceRepository;
 
-  POSCartController(this._repository) : super(POSCartState());
+  POSCartController(this._invoiceRepository) : super(POSCartState());
 
   void addProduct(Product product) {
     final existingIndex = state.items.indexWhere((item) => item.product.id == product.id);
@@ -129,33 +130,36 @@ class POSCartController extends StateNotifier<POSCartState> {
 
     state = state.copyWith(isProcessing: true, clearError: true);
 
-    final checkoutData = {
-      'customer_id': state.customer?.id,
-      'items': state.items.map((item) => {
-        'product_id': item.product.id,
-        'quantity': item.quantity,
-        'unit_price': item.unitPrice,
-        'tax_percentage': item.taxPercentage,
-      }).toList(),
-      'subtotal': state.subtotal,
-      'discount_percentage': state.discountPercentage,
-      'discount_amount': state.discountAmount,
-      'tax_total': state.taxTotal,
-      'grand_total': state.grandTotal,
-      'amount_paid': amountPaid,
-      'payment_method': paymentMethod,
-    };
+    final invoice = Invoice(
+      customerId: state.customer?.id,
+      subtotal: state.subtotal,
+      discountPercentage: state.discountPercentage,
+      discountAmount: state.discountAmount,
+      taxTotal: state.taxTotal,
+      grandTotal: state.grandTotal,
+      amountPaid: amountPaid,
+      balanceDue: state.grandTotal - amountPaid > 0 ? state.grandTotal - amountPaid : 0,
+      paymentMethod: paymentMethod,
+      items: state.items.map((item) => InvoiceItem(
+        productId: item.product.id!,
+        productName: item.product.name,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        taxPercentage: item.taxPercentage,
+        lineTotal: item.unitPrice * item.quantity,
+      )).toList(),
+    );
 
-    final result = await _repository.checkout(checkoutData);
+    final result = await _invoiceRepository.createInvoice(invoice);
 
     return result.fold(
       (failure) {
         state = state.copyWith(isProcessing: false, error: failure.message);
         return null;
       },
-      (invoice) {
+      (createdInvoice) {
         state = state.copyWith(isProcessing: false);
-        return invoice; // Return invoice for receipt printing/display
+        return createdInvoice;
       },
     );
   }

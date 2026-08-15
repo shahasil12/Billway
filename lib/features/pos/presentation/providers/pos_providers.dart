@@ -22,6 +22,6 @@ final posSessionControllerProvider = StateNotifierProvider<POSSessionController,
 });
 
 final posCartControllerProvider = StateNotifierProvider<POSCartController, POSCartState>((ref) {
-  final repository = ref.watch(posRepositoryProvider);
+  final repository = ref.watch(invoiceRepositoryProvider);
   return POSCartController(repository);
 });

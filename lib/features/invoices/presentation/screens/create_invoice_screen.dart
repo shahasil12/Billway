@@ -82,6 +82,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                   quantity: qty,
                   unitPrice: product.price,
                   taxPercentage: product.taxPercentage,
+                  lineTotal: product.price * qty,
                 ));
               }
             });
@@ -124,6 +125,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
             quantity: 1,
             unitPrice: product.price,
             taxPercentage: product.taxPercentage,
+            lineTotal: product.price,
           ));
         }
         _barcodeController.clear();
@@ -173,9 +175,21 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
     final invoice = Invoice(
       customerId: _selectedCustomer!.id!,
       reference: _referenceController.text.trim().isNotEmpty ? _referenceController.text.trim() : null,
+      subtotal: _calculatedSubtotal,
       discountPercentage: _discountPercentage,
+      discountAmount: _calculatedDiscount,
+      taxTotal: _calculatedTax,
+      grandTotal: _calculatedGrandTotal,
+      balanceDue: _calculatedGrandTotal,
       paymentMethod: _paymentMethod,
-      items: _items,
+      items: _items.map((i) => InvoiceItem(
+        productId: i.productId,
+        productName: i.productName,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+        taxPercentage: i.taxPercentage,
+        lineTotal: (i.unitPrice ?? 0) * i.quantity,
+      )).toList(),
     );
 
     final result = await ref.read(invoiceRepositoryProvider).createInvoice(invoice);
