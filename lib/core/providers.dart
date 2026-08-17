@@ -1,11 +1,12 @@
 import 'package:dio/dio.dart';
-import '../features/auth/data/repositories/user_management_repository.dart';
-import '../features/auth/presentation/controllers/user_management_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'network/api_client.dart';
+import 'network/warmup_service.dart';
 import 'database/database_helper.dart';
 import 'sync/sync_service.dart';
+import '../features/auth/data/repositories/user_management_repository.dart';
+import '../features/auth/presentation/controllers/user_management_controller.dart';
 import '../features/customers/data/datasources/customer_local_data_source.dart';
 import '../features/products/data/datasources/product_local_data_source.dart';
 import '../features/invoices/data/datasources/invoice_local_data_source.dart';
@@ -56,6 +57,13 @@ final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
   return DatabaseHelper.instance;
 });
 
+final warmupServiceProvider = Provider<WarmupService>((ref) {
+  return WarmupService(
+    Dio(),
+    'https://billway-api-a9ea.onrender.com/api/',
+  );
+});
+
 final syncServiceProvider = Provider<SyncService>((ref) {
   return SyncService(
     dbHelper: ref.read(databaseHelperProvider),
@@ -100,6 +108,7 @@ final dashboardRemoteDataSourceProvider = Provider<DashboardRemoteDataSource>((r
 final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
   return DashboardRepositoryImpl(
     remoteDataSource: ref.read(dashboardRemoteDataSourceProvider),
+    dbHelper: ref.read(databaseHelperProvider),
   );
 });
 
@@ -127,7 +136,10 @@ final categoryRemoteDataSourceProvider = Provider<CategoryRemoteDataSource>((ref
 });
 
 final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
-  return CategoryRepositoryImpl(ref.read(categoryRemoteDataSourceProvider));
+  return CategoryRepositoryImpl(
+    ref.read(categoryRemoteDataSourceProvider),
+    ref.read(databaseHelperProvider),
+  );
 });
 
 // Product Providers
@@ -188,5 +200,8 @@ final settingsRemoteDataSourceProvider = Provider<SettingsRemoteDataSource>((ref
 });
 
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
-  return SettingsRepositoryImpl(ref.read(settingsRemoteDataSourceProvider));
+  return SettingsRepositoryImpl(
+    ref.read(settingsRemoteDataSourceProvider),
+    ref.read(databaseHelperProvider),
+  );
 });

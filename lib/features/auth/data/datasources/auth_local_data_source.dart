@@ -1,10 +1,14 @@
+import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../domain/entities/user.dart';
 
 abstract class AuthLocalDataSource {
   Future<void> saveTokens(String access, String refresh);
   Future<void> clearTokens();
   Future<String?> getAccessToken();
   Future<String?> getRefreshToken();
+  Future<void> cacheUser(User user);
+  Future<User?> getCachedUser();
 }
 
 class AuthLocalDataSourceImpl implements AuthLocalDataSource {
@@ -22,6 +26,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   Future<void> clearTokens() async {
     await storage.delete(key: 'access_token');
     await storage.delete(key: 'refresh_token');
+    await storage.delete(key: 'cached_user');
   }
 
   @override
@@ -32,5 +37,42 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<String?> getRefreshToken() async {
     return await storage.read(key: 'refresh_token');
+  }
+
+  @override
+  Future<void> cacheUser(User user) async {
+    final json = jsonEncode({
+      'id': user.id,
+      'username': user.username,
+      'email': user.email,
+      'first_name': user.firstName,
+      'last_name': user.lastName,
+      'role': user.role.name,
+    });
+    await storage.write(key: 'cached_user', value: json);
+  }
+
+  @override
+  Future<User?> getCachedUser() async {
+    final raw = await storage.read(key: 'cached_user');
+    if (raw == null) return null;
+    try {
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      final roleStr = map['role'] as String? ?? 'unknown';
+      final role = UserRole.values.firstWhere(
+        (r) => r.name == roleStr,
+        orElse: () => UserRole.unknown,
+      );
+      return User(
+        id: map['id'] as int,
+        username: map['username'] as String,
+        email: map['email'] as String,
+        firstName: map['first_name'] as String? ?? '',
+        lastName: map['last_name'] as String? ?? '',
+        role: role,
+      );
+    } catch (_) {
+      return null;
+    }
   }
 }

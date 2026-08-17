@@ -8,11 +8,12 @@ class AuthController extends StateNotifier<AsyncValue<User?>> {
   AuthController(this._repository) : super(const AsyncValue.data(null));
 
   Future<void> checkAutoLogin() async {
+    state = const AsyncValue.loading();
     final success = await _repository.autoLogin();
     if (success) {
-      final userOrFailure = await _repository.getCurrentUser();
+      final userOrFailure = await _repository.getCurrentUserCached();
       userOrFailure.fold(
-        (failure) => state = AsyncValue.error(failure.message, StackTrace.current),
+        (failure) => state = const AsyncValue.data(null),
         (user) => state = AsyncValue.data(user),
       );
     } else {

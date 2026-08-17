@@ -20,9 +20,32 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _onUpgrade,
     );
+  }
+
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      const textType = 'TEXT';
+      const intType = 'INTEGER';
+      const realType = 'REAL';
+      await db.execute('''
+CREATE TABLE IF NOT EXISTS settings (
+  id $intType PRIMARY KEY,
+  business_name $textType NOT NULL,
+  business_address $textType NOT NULL,
+  phone_number $textType NOT NULL,
+  gst_number $textType,
+  invoice_prefix $textType NOT NULL,
+  invoice_footer $textType NOT NULL,
+  default_tax_percentage $realType NOT NULL,
+  currency $textType NOT NULL,
+  updated_at $textType
+)
+''');
+    }
   }
 
   Future _createDB(Database db, int version) async {
@@ -99,17 +122,128 @@ CREATE TABLE invoices (
 )
 ''');
 
+    // POS Sessions Table
+    await db.execute('''
+CREATE TABLE pos_sessions (
+  local_id $idType,
+  id $textType UNIQUE, -- backend might use string ID for session
+  user_id $intType NOT NULL,
+  opening_cash $realType NOT NULL,
+  closing_cash $realType,
+  expected_cash $realType,
+  cash_difference $realType,
+  status $textType NOT NULL,
+  opened_at $textType NOT NULL,
+  closed_at $textType,
+  is_synced $intType DEFAULT 1
+)
+''');
+
+    // Settings Table (singleton row, id=1)
+    await db.execute('''
+CREATE TABLE IF NOT EXISTS settings (
+  id $intType PRIMARY KEY,
+  business_name $textType NOT NULL,
+  business_address $textType NOT NULL,
+  phone_number $textType NOT NULL,
+  gst_number $textType,
+  invoice_prefix $textType NOT NULL,
+  invoice_footer $textType NOT NULL,
+  default_tax_percentage $realType NOT NULL,
+  currency $textType NOT NULL,
+  updated_at $textType
+)
+''');
+
     // Sync Queue Table
     await db.execute('''
 CREATE TABLE sync_queue (
   id $idType,
-  action $textType NOT NULL, -- CREATE, UPDATE, DELETE
-  entity_type $textType NOT NULL, -- CUSTOMER, PRODUCT, INVOICE
+  action $textType NOT NULL, -- CREATE, UPDATE, DELETE, SESSION_OPEN, SESSION_CLOSE
+  entity_type $textType NOT NULL, -- CUSTOMER, PRODUCT, INVOICE, POS_SESSION
   payload $textType NOT NULL, -- JSON string of the data
   status $textType NOT NULL, -- PENDING, FAILED
   created_at $textType NOT NULL
 )
 ''');
+  }
+
+  Future<Map<String, dynamic>> getDashboardSummaryData() async {
+    final db = await instance.database;
+    
+    // Get today's date bounds (for simplistic SQLite date matching)
+    final now = DateTime.now();
+    final todayStr = now.toIso8601String().split('T')[0];
+    
+    // Query Total Products
+    final productsCountResult = await db.rawQuery('SELECT COUNT(*) as count FROM products');
+    final totalProducts = Sqflite.firstIntValue(productsCountResult) ?? 0;
+
+    // Query Total Customers
+    final customersCountResult = await db.rawQuery('SELECT COUNT(*) as count FROM customers');
+    final totalCustomers = Sqflite.firstIntValue(customersCountResult) ?? 0;
+
+    // Query Today's Invoices Count and Sales
+    final invoicesResult = await db.rawQuery('''
+      SELECT COUNT(*) as count, SUM(grand_total) as total_sales 
+      FROM invoices 
+      WHERE created_at LIKE ?
+    ''', ['$todayStr%']);
+    
+    final todaysInvoiceCount = invoicesResult.isNotEmpty ? (invoicesResult.first['count'] as int? ?? 0) : 0;
+    final todaysSales = invoicesResult.isNotEmpty ? (invoicesResult.first['total_sales'] as double? ?? 0.0) : 0.0;
+
+    // Recent Invoices (limit 5)
+    final recentInvoicesResult = await db.query(
+      'invoices',
+      orderBy: 'created_at DESC',
+      limit: 5,
+    );
+
+    return {
+      'totalProducts': totalProducts,
+      'totalCustomers': totalCustomers,
+      'todaysInvoiceCount': todaysInvoiceCount,
+      'todaysSales': todaysSales,
+      'recentInvoices': recentInvoicesResult,
+    };
+  }
+
+  /// Returns the cached settings row, or null if never fetched.
+  Future<Map<String, dynamic>?> getLocalSettings() async {
+    final db = await instance.database;
+    final rows = await db.query('settings', limit: 1);
+    return rows.isNotEmpty ? rows.first : null;
+  }
+
+  /// Upserts (insert or replace) a settings row locally.
+  Future<void> saveLocalSettings(Map<String, dynamic> data) async {
+    final db = await instance.database;
+    final row = {...data, 'updated_at': DateTime.now().toIso8601String()};
+    await db.insert('settings', row, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  /// Upserts a list of categories from the server.
+  Future<void> upsertCategories(List<Map<String, dynamic>> categories) async {
+    final db = await instance.database;
+    final batch = db.batch();
+    for (final cat in categories) {
+      batch.insert('categories', {...cat, 'is_synced': 1},
+          conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+    await batch.commit(noResult: true);
+  }
+
+  /// Returns all locally cached categories.
+  Future<List<Map<String, dynamic>>> getLocalCategories({String? search}) async {
+    final db = await instance.database;
+    if (search != null && search.isNotEmpty) {
+      return db.query('categories',
+          where: 'name LIKE ?',
+          whereArgs: ['%$search%'],
+          orderBy: 'name ASC');
+    }
+    return db.query('categories', orderBy: 'name ASC');
   }
 
   Future close() async {

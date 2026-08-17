@@ -6,14 +6,24 @@ import '../../domain/repositories/pos_repository.dart';
 import '../controllers/pos_session_controller.dart';
 import '../controllers/pos_cart_controller.dart';
 
+import '../../data/datasources/pos_local_data_source.dart';
+
 final posRemoteDataSourceProvider = Provider<POSRemoteDataSource>((ref) {
   final apiClient = ref.watch(apiClientProvider);
   return POSRemoteDataSourceImpl(apiClient);
 });
 
+final posLocalDataSourceProvider = Provider<POSLocalDataSource>((ref) {
+  final dbHelper = ref.watch(databaseHelperProvider);
+  return POSLocalDataSourceImpl(dbHelper: dbHelper);
+});
+
 final posRepositoryProvider = Provider<POSRepository>((ref) {
   final remoteDataSource = ref.watch(posRemoteDataSourceProvider);
-  return POSRepositoryImpl(remoteDataSource);
+  final localDataSource = ref.watch(posLocalDataSourceProvider);
+  final syncService = ref.watch(syncServiceProvider);
+  
+  return POSRepositoryImpl(remoteDataSource, localDataSource, syncService, ref);
 });
 
 final posSessionControllerProvider = StateNotifierProvider<POSSessionController, POSSessionState>((ref) {

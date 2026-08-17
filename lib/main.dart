@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
 import 'core/router.dart';
 import 'core/providers.dart';
 import 'core/theme.dart';
@@ -13,18 +12,29 @@ void main() {
   );
 }
 
-class BillwayApp extends ConsumerWidget {
+class BillwayApp extends ConsumerStatefulWidget {
   const BillwayApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(routerProvider);
-    final authState = ref.watch(authStateProvider);
-    
-    // Eagerly initialize SyncService so it listens to connectivity changes 
-    // and syncs in the background silently.
-    ref.listen(syncServiceProvider, (_, __) {});
+  ConsumerState<BillwayApp> createState() => _BillwayAppState();
+}
 
+class _BillwayAppState extends ConsumerState<BillwayApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Silently wake up the Render server the moment the app opens.
+    // The free plan spins down after inactivity — this ping runs
+    // in the background so the server is ready before the user taps Login.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(warmupServiceProvider).warmup();
+      ref.read(syncServiceProvider); // also eagerly init SyncService
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final router = ref.watch(routerProvider);
     return MaterialApp.router(
       title: 'Billway POS',
       debugShowCheckedModeBanner: false,

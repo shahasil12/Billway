@@ -14,8 +14,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-
   bool _obscurePassword = true;
+  bool _serverReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _wakeServer();
+  }
+
+  Future<void> _wakeServer() async {
+    // Warmup was already fired from main.dart, but we track readiness here
+    // to update the UI hint. Wait a moment then mark as ready-ish.
+    await Future.delayed(const Duration(seconds: 3));
+    if (mounted) setState(() => _serverReady = true);
+  }
 
   @override
   void dispose() {
@@ -65,7 +78,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 8),
+                // Subtle server readiness indicator
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 500),
+                  child: _serverReady
+                      ? const SizedBox.shrink()
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 10,
+                              height: 10,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Connecting to server...',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+                const SizedBox(height: 40),
                 TextFormField(
                   controller: _usernameController,
                   decoration: const InputDecoration(

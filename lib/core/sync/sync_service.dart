@@ -27,7 +27,8 @@ class SyncService {
       'status': 'PENDING',
       'created_at': DateTime.now().toIso8601String(),
     });
-    syncPendingData(); // Attempt to sync immediately
+    // Don't call syncPendingData() here — it could block the caller if Render is slow.
+    // The connectivity listener above will handle syncing when network is available.
   }
 
   Future<void> syncPendingData() async {
@@ -97,6 +98,19 @@ class SyncService {
         final id = payload['id'];
         if (id == null) return false;
         await apiClient.dio.delete('$endpoint$id/');
+      } else if (action == 'SESSION_OPEN') {
+        final response = await apiClient.dio.post('pos/sessions/open/', data: payload);
+        if (response.statusCode == 200 || response.statusCode == 201) {
+            final remoteId = response.data['id'];
+            final localId = payload['local_id'];
+            if (localId != null) {
+                await _updateLocalId('POS_SESSION', localId, remoteId);
+            }
+        }
+      } else if (action == 'SESSION_CLOSE') {
+        final id = payload['id']; // This should be the remote ID
+        if (id == null) return false;
+        await apiClient.dio.post('pos/sessions/$id/close/', data: payload);
       }
       return true;
     } on DioException catch (e) {
@@ -110,17 +124,18 @@ class SyncService {
     }
   }
 
-  Future<void> _updateLocalId(String entityType, int localId, int remoteId) async {
+  Future<void> _updateLocalId(String entityType, int localId, dynamic remoteId) async {
       final db = await dbHelper.database;
       String table = '';
       if (entityType == 'CUSTOMER') table = 'customers';
       else if (entityType == 'PRODUCT') table = 'products';
       else if (entityType == 'INVOICE') table = 'invoices';
+      else if (entityType == 'POS_SESSION') table = 'pos_sessions';
       
       if (table.isNotEmpty) {
           await db.update(
               table, 
-              {'id': remoteId, 'is_synced': 1}, 
+              {'id': remoteId is int ? remoteId : remoteId.toString(), 'is_synced': 1}, 
               where: 'local_id = ? OR id = ?', 
               whereArgs: [localId, localId] 
           );

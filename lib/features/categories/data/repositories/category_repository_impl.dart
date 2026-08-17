@@ -1,25 +1,53 @@
 import 'package:dartz/dartz.dart';
-import 'package:dio/dio.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/database/database_helper.dart';
 import '../../domain/entities/category.dart';
 import '../../domain/repositories/category_repository.dart';
 import '../datasources/category_remote_data_source.dart';
 
 class CategoryRepositoryImpl implements CategoryRepository {
   final CategoryRemoteDataSource remoteDataSource;
+  final DatabaseHelper dbHelper;
 
-  CategoryRepositoryImpl(this.remoteDataSource);
+  CategoryRepositoryImpl(this.remoteDataSource, this.dbHelper);
 
   @override
   Future<Either<Failure, PaginatedCategories>> getCategories({int page = 1, String? search}) async {
     try {
-      final categories = await remoteDataSource.getCategories(page, search);
-      return Right(categories);
-    } on DioException catch (e) {
-      return Left(ServerFailure(e.message ?? 'Server error'));
+      final localMaps = await dbHelper.getLocalCategories(search: search);
+
+      // Always fire a background sync to keep local cache fresh
+      _syncRemoteCategories();
+
+      final localCats = localMaps.map(_mapToCategory).toList();
+      return Right(PaginatedCategories(count: localCats.length, results: localCats));
     } catch (e) {
-      return const Left(ServerFailure('Failed to fetch categories'));
+      return Left(ServerFailure('Failed to fetch categories: $e'));
     }
+  }
+
+  Future<void> _syncRemoteCategories() async {
+    try {
+      final remote = await remoteDataSource.getCategories(1, null);
+      final maps = remote.results.map((c) => {
+        'id': c.id,
+        'name': c.name,
+        'description': c.description,
+        'created_at': c.createdAt,
+      }).toList();
+      await dbHelper.upsertCategories(maps);
+    } catch (_) {
+      // Ignore — we already returned local data
+    }
+  }
+
+  Category _mapToCategory(Map<String, dynamic> m) {
+    return Category(
+      id: m['id'] as int?,
+      name: m['name'] as String,
+      description: m['description'] as String?,
+      createdAt: m['created_at'] as String?,
+    );
   }
 
   @override
@@ -28,7 +56,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
       final category = await remoteDataSource.getCategory(id);
       return Right(category);
     } catch (e) {
-      return const Left(ServerFailure('Failed to get category'));
+      return Left(ServerFailure('Failed to get category: $e'));
     }
   }
 
@@ -36,33 +64,33 @@ class CategoryRepositoryImpl implements CategoryRepository {
   Future<Either<Failure, Category>> createCategory(Category category) async {
     try {
       final newCategory = await remoteDataSource.createCategory(category);
+      // Cache it locally
+      await dbHelper.upsertCategories([{
+        'id': newCategory.id,
+        'name': newCategory.name,
+        'description': newCategory.description,
+        'created_at': newCategory.createdAt,
+      }]);
       return Right(newCategory);
-    } on DioException catch (e) {
-       final errors = e.response?.data;
-       String message = 'Failed to create category';
-       if (errors is Map) {
-         message = errors.values.first.toString();
-       }
-       return Left(ServerFailure(message));
     } catch (e) {
-      return const Left(ServerFailure('Failed to create category'));
+      final msg = e.toString();
+      return Left(ServerFailure(msg));
     }
   }
 
   @override
   Future<Either<Failure, Category>> updateCategory(Category category) async {
     try {
-      final updatedCategory = await remoteDataSource.updateCategory(category);
-      return Right(updatedCategory);
-    } on DioException catch (e) {
-       final errors = e.response?.data;
-       String message = 'Failed to update category';
-       if (errors is Map) {
-         message = errors.values.first.toString();
-       }
-       return Left(ServerFailure(message));
+      final updated = await remoteDataSource.updateCategory(category);
+      await dbHelper.upsertCategories([{
+        'id': updated.id,
+        'name': updated.name,
+        'description': updated.description,
+        'created_at': updated.createdAt,
+      }]);
+      return Right(updated);
     } catch (e) {
-      return const Left(ServerFailure('Failed to update category'));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -70,14 +98,12 @@ class CategoryRepositoryImpl implements CategoryRepository {
   Future<Either<Failure, void>> deleteCategory(int id) async {
     try {
       await remoteDataSource.deleteCategory(id);
+      // Also remove from local cache
+      final db = await dbHelper.database;
+      await db.delete('categories', where: 'id = ?', whereArgs: [id]);
       return const Right(null);
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 400 && e.response?.data['detail'] != null) {
-        return Left(ServerFailure(e.response!.data['detail']));
-      }
-      return const Left(ServerFailure('Failed to delete category'));
     } catch (e) {
-      return const Left(ServerFailure('Failed to delete category'));
+      return Left(ServerFailure(e.toString()));
     }
   }
 }
