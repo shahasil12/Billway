@@ -71,14 +71,24 @@ class POSCartController extends StateNotifier<POSCartState> {
     final existingIndex = state.items.indexWhere((item) => item.product.id == product.id);
     
     if (existingIndex >= 0) {
+      final currentQty = state.items[existingIndex].quantity;
+      if (product.trackStock && currentQty + 1 > product.stock) {
+        state = state.copyWith(error: 'Not enough stock. Available: ${product.stock}', clearError: false);
+        return;
+      }
       final updatedItems = List<CartItem>.from(state.items);
       updatedItems[existingIndex] = updatedItems[existingIndex].copyWith(
-        quantity: updatedItems[existingIndex].quantity + 1
+        quantity: currentQty + 1
       );
-      state = state.copyWith(items: updatedItems);
+      state = state.copyWith(items: updatedItems, error: null);
     } else {
+      if (product.trackStock && product.stock < 1) {
+        state = state.copyWith(error: 'Not enough stock. Available: ${product.stock}', clearError: false);
+        return;
+      }
       state = state.copyWith(
         items: [...state.items, CartItem(product: product)],
+        error: null,
       );
     }
   }
@@ -91,9 +101,14 @@ class POSCartController extends StateNotifier<POSCartState> {
     
     final existingIndex = state.items.indexWhere((item) => item.product.id == productId);
     if (existingIndex >= 0) {
+      final product = state.items[existingIndex].product;
+      if (product.trackStock && quantity > product.stock) {
+        state = state.copyWith(error: 'Not enough stock. Available: ${product.stock}', clearError: false);
+        return;
+      }
       final updatedItems = List<CartItem>.from(state.items);
       updatedItems[existingIndex] = updatedItems[existingIndex].copyWith(quantity: quantity);
-      state = state.copyWith(items: updatedItems);
+      state = state.copyWith(items: updatedItems, error: null);
     }
   }
 

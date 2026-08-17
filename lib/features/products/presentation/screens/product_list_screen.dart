@@ -309,6 +309,19 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                         '$currency${product.price.toStringAsFixed(2)}',
                         style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w700, color: AppColors.primary),
                       ),
+                      if (product.trackStock)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: product.stock <= product.minStock ? AppColors.error.withOpacity(0.1) : AppColors.success.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            'Stock: ${product.stock}',
+                            style: AppTextStyles.caption.copyWith(
+                                color: product.stock <= product.minStock ? AppColors.error : AppColors.success),
+                          ),
+                        ),
                       if (ref.watch(authStateProvider).value?.role != UserRole.cashier)
                         IconButton(
                           icon: const Icon(Icons.edit_outlined, size: 20, color: AppColors.textSecondary),

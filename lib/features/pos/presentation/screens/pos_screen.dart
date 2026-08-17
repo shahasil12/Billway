@@ -338,6 +338,15 @@ class _POSScreenState extends ConsumerState<POSScreen> {
     final isTablet = MediaQuery.of(context).size.width >= 600;
     final currency = ref.watch(settingsProvider).settings?.currency ?? '\$';
 
+    ref.listen<POSCartState>(posCartControllerProvider, (previous, next) {
+      if (next.error != null && (previous == null || previous.error != next.error)) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(next.error!),
+          backgroundColor: AppColors.error,
+        ));
+      }
+    });
+
     // When session check finishes and no session found, show dialog once
     if (!sessionState.isLoading && sessionState.session == null && !_dialogShown) {
       _dialogShown = true;
