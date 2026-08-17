@@ -99,4 +99,14 @@ class CustomerRepositoryImpl implements CustomerRepository {
       return const Left(ServerFailure('Failed to delete customer'));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> payCustomerCredit(int id, double amount, String paymentMethod) async {
+    try {
+      await remoteDataSource.payCustomerCredit(id, amount, paymentMethod);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

@@ -94,10 +94,12 @@ class PaymentMethodSelector extends StatelessWidget {
     return Row(
       children: [
         Expanded(child: _buildOption('CASH', Icons.money)),
-        const SizedBox(width: AppSpacing.p8),
+        const SizedBox(width: AppSpacing.p4),
         Expanded(child: _buildOption('CARD', Icons.credit_card)),
-        const SizedBox(width: AppSpacing.p8),
+        const SizedBox(width: AppSpacing.p4),
         Expanded(child: _buildOption('UPI', Icons.qr_code_scanner)),
+        const SizedBox(width: AppSpacing.p4),
+        Expanded(child: _buildOption('CREDIT', Icons.account_balance_wallet)),
       ],
     );
   }

@@ -8,4 +8,5 @@ abstract class CustomerRepository {
   Future<Either<Failure, Customer>> createCustomer(Customer customer);
   Future<Either<Failure, Customer>> updateCustomer(Customer customer);
   Future<Either<Failure, void>> deleteCustomer(int id);
+  Future<Either<Failure, void>> payCustomerCredit(int id, double amount, String paymentMethod);
 }

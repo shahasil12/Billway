@@ -9,6 +9,7 @@ abstract class CustomerRemoteDataSource {
   Future<CustomerModel> createCustomer(Customer customer);
   Future<CustomerModel> updateCustomer(Customer customer);
   Future<void> deleteCustomer(int id);
+  Future<void> payCustomerCredit(int id, double amount, String paymentMethod);
 }
 
 class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
@@ -49,5 +50,13 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
   @override
   Future<void> deleteCustomer(int id) async {
     await apiClient.dio.delete('customers/$id/');
+  }
+
+  @override
+  Future<void> payCustomerCredit(int id, double amount, String paymentMethod) async {
+    await apiClient.dio.post(
+      'customers/$id/pay_credit/',
+      data: {'amount': amount, 'payment_method': paymentMethod},
+    );
   }
 }

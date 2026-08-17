@@ -300,7 +300,14 @@ class _POSScreenState extends ConsumerState<POSScreen> {
               label: 'Complete Sale',
               isLarge: true,
               onPressed: () async {
-                final amount = double.tryParse(amountController.text) ?? 0;
+                if (paymentMethod == 'CREDIT' && cartState.customer == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please select a customer for CREDIT payments')),
+                  );
+                  return;
+                }
+                
+                final amount = paymentMethod == 'CREDIT' ? 0.0 : (double.tryParse(amountController.text) ?? 0);
                 final invoice = await ref.read(posCartControllerProvider.notifier).checkout(amount, paymentMethod);
                 if (invoice != null && mounted) {
                   Navigator.pop(context);
