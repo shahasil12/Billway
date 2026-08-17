@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:io';
 
 import '../../../categories/presentation/controllers/category_list_controller.dart';
@@ -73,14 +74,44 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);
       });
     }
+  }
+
+  void _showImagePickerOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Photo Library'),
+                onTap: () {
+                  _pickImage(ImageSource.gallery);
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_camera),
+                title: const Text('Camera'),
+                onTap: () {
+                  _pickImage(ImageSource.camera);
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _submit() {
@@ -117,7 +148,7 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
         children: [
           Center(
             child: GestureDetector(
-              onTap: _pickImage,
+              onTap: _showImagePickerOptions,
               child: Stack(
                 alignment: Alignment.bottomRight,
                 children: [
@@ -171,22 +202,32 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
               ),
               const SizedBox(width: AppSpacing.p16),
               Expanded(
-                child: DropdownButtonFormField<int>(
-                  decoration: InputDecoration(
-                    labelText: 'Category *',
-                    filled: true,
-                    fillColor: AppColors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      borderSide: const BorderSide(color: AppColors.border),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        decoration: InputDecoration(
+                          labelText: 'Category *',
+                          filled: true,
+                          fillColor: AppColors.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderSide: const BorderSide(color: AppColors.border),
+                          ),
+                        ),
+                        value: _selectedCategoryId,
+                        items: categories.map((cat) => DropdownMenuItem(
+                          value: cat.id,
+                          child: Text(cat.name, style: AppTextStyles.bodyMedium),
+                        )).toList(),
+                        onChanged: (val) => setState(() => _selectedCategoryId = val),
+                      ),
                     ),
-                  ),
-                  value: _selectedCategoryId,
-                  items: categories.map((cat) => DropdownMenuItem(
-                    value: cat.id,
-                    child: Text(cat.name, style: AppTextStyles.bodyMedium),
-                  )).toList(),
-                  onChanged: (val) => setState(() => _selectedCategoryId = val),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle, color: AppColors.primary),
+                      onPressed: () => context.push('/categories/add'),
+                    ),
+                  ],
                 ),
               ),
             ],
