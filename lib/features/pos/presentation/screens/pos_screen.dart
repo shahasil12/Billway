@@ -258,8 +258,8 @@ class _POSScreenState extends ConsumerState<POSScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (innerContext, setState) => AlertDialog(
           backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
           title: Text('Checkout', style: AppTextStyles.h2),
@@ -293,7 +293,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(innerContext),
               child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
             ),
             PrimaryButton(
@@ -310,11 +310,11 @@ class _POSScreenState extends ConsumerState<POSScreen> {
                 final amount = paymentMethod == 'CREDIT' ? 0.0 : (double.tryParse(amountController.text) ?? 0);
                 final invoice = await ref.read(posCartControllerProvider.notifier).checkout(amount, paymentMethod);
                 if (invoice != null && mounted) {
-                  Navigator.pop(context);
-                  if (fromBottomSheet) Navigator.pop(context);
+                  Navigator.pop(innerContext);
+                  if (fromBottomSheet && mounted) Navigator.pop(context);
                   ref.read(posCartControllerProvider.notifier).clearCart();
-                  context.push('/invoices/${invoice.id}', extra: invoice);
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  if (mounted) context.push('/invoices/${invoice.id}', extra: invoice);
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Sale successful! Invoice #${invoice.id}'),
                       backgroundColor: AppColors.success,

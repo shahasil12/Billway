@@ -17,14 +17,14 @@ class CustomerDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
-  void _showPayCreditDialog(BuildContext context, double totalDue) {
+  void _showPayCreditDialog(double totalDue) {
     final amountController = TextEditingController(text: totalDue.toStringAsFixed(2));
     String paymentMethod = 'CASH';
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (innerContext, setState) => AlertDialog(
           title: const Text('Pay Credit Balance'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -43,7 +43,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(innerContext),
               child: const Text('Cancel'),
             ),
             PrimaryButton(
@@ -59,12 +59,14 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                 );
                 
                 result.fold(
-                  (l) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${l.message}'))),
+                  (l) {
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${l.message}')));
+                  },
                   (r) {
-                    Navigator.pop(context);
+                    Navigator.pop(innerContext);
                     // Refresh screen
                     this.setState(() {});
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment Successful'), backgroundColor: AppColors.success));
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment Successful'), backgroundColor: AppColors.success));
                   },
                 );
               },
@@ -139,7 +141,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                           ),
                           PrimaryButton(
                             label: 'Pay Balance',
-                            onPressed: () => _showPayCreditDialog(context, 0.0), // In a real app this would be `customer.totalDue`
+                            onPressed: () => _showPayCreditDialog(0.0), // In a real app this would be `customer.totalDue`
                           ),
                         ],
                       ),

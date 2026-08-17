@@ -112,7 +112,13 @@ class InvoiceLocalDataSourceImpl implements InvoiceLocalDataSource {
     
     final itemsList = invoice.items.map((e) => {
       'product': e.productId,
+      'product_name': e.productName,
+      'product_category': e.productCategory,
       'quantity': e.quantity,
+      'unit_price': e.unitPrice,
+      'tax_percentage': e.taxPercentage,
+      'tax_amount': e.taxAmount,
+      'line_total': e.lineTotal,
     }).toList();
     
     final data = {
@@ -159,7 +165,13 @@ class InvoiceLocalDataSourceImpl implements InvoiceLocalDataSource {
     
     final itemsList = invoice.items.map((e) => {
       'product': e.productId,
+      'product_name': e.productName,
+      'product_category': e.productCategory,
       'quantity': e.quantity,
+      'unit_price': e.unitPrice,
+      'tax_percentage': e.taxPercentage,
+      'tax_amount': e.taxAmount,
+      'line_total': e.lineTotal,
     }).toList();
 
     final data = {
@@ -207,7 +219,13 @@ class InvoiceLocalDataSourceImpl implements InvoiceLocalDataSource {
       
       final itemsList = invoice.items.map((e) => {
         'product': e.productId,
+        'product_name': e.productName,
+        'product_category': e.productCategory,
         'quantity': e.quantity,
+        'unit_price': e.unitPrice,
+        'tax_percentage': e.taxPercentage,
+        'tax_amount': e.taxAmount,
+        'line_total': e.lineTotal,
       }).toList();
 
       batch.insert(

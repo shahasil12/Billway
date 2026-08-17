@@ -252,7 +252,7 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
                   children: [
                     Text('Billed To', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
                     const SizedBox(height: AppSpacing.p4),
-                    Text(_invoice.customer?.name ?? 'Unknown', style: AppTextStyles.h2),
+                    Text(_invoice.customer?.name ?? 'Walk-in Customer', style: AppTextStyles.h2),
                     if (_invoice.customer?.email != null) Text(_invoice.customer!.email!, style: AppTextStyles.bodyMedium),
                     if (_invoice.customer?.phone != null) Text(_invoice.customer!.phone!, style: AppTextStyles.bodyMedium),
                   ],
