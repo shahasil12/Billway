@@ -20,15 +20,21 @@ class ProductRepositoryImpl implements ProductRepository {
     try {
       final localProducts = await localDataSource.getProducts(search: search, categoryId: categoryId);
       
-      try {
-        final remoteProducts = await remoteDataSource.getProducts(page, search, categoryId);
-        await localDataSource.upsertProducts(remoteProducts.results as List<ProductModel>);
-        return Right(remoteProducts);
-      } catch (e) {
-        return Right(PaginatedProductsModel(count: localProducts.length, results: localProducts));
-      }
+      // Fire and forget background sync
+      _syncRemoteProducts(page, search, categoryId);
+      
+      return Right(PaginatedProductsModel(count: localProducts.length, results: localProducts));
     } catch (e) {
       return const Left(ServerFailure('Failed to fetch products'));
+    }
+  }
+
+  Future<void> _syncRemoteProducts(int page, String? search, int? categoryId) async {
+    try {
+      final remoteProducts = await remoteDataSource.getProducts(page, search, categoryId);
+      await localDataSource.upsertProducts(remoteProducts.results as List<ProductModel>);
+    } catch (_) {
+      // Ignore background sync errors
     }
   }
 

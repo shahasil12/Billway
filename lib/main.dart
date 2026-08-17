@@ -20,6 +20,10 @@ class BillwayApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     final authState = ref.watch(authStateProvider);
+    
+    // Eagerly initialize SyncService so it listens to connectivity changes 
+    // and syncs in the background silently.
+    ref.listen(syncServiceProvider, (_, __) {});
 
     return MaterialApp.router(
       title: 'Billway POS',

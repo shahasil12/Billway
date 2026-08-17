@@ -20,16 +20,21 @@ class CustomerRepositoryImpl implements CustomerRepository {
     try {
       final localCustomers = await localDataSource.getCustomers(search: search);
       
-      try {
-        final remoteCustomers = await remoteDataSource.getCustomers(page, search);
-        await localDataSource.upsertCustomers(remoteCustomers.results as List<CustomerModel>);
-        return Right(remoteCustomers);
-      } catch (e) {
-        // Offline: Return local data
-        return Right(PaginatedCustomersModel(count: localCustomers.length, results: localCustomers));
-      }
+      // Fire and forget background sync
+      _syncRemoteCustomers(page, search);
+      
+      return Right(PaginatedCustomersModel(count: localCustomers.length, results: localCustomers));
     } catch (e) {
       return const Left(ServerFailure('Failed to fetch customers'));
+    }
+  }
+
+  Future<void> _syncRemoteCustomers(int page, String? search) async {
+    try {
+      final remoteCustomers = await remoteDataSource.getCustomers(page, search);
+      await localDataSource.upsertCustomers(remoteCustomers.results as List<CustomerModel>);
+    } catch (_) {
+      // Ignore background sync errors
     }
   }
 

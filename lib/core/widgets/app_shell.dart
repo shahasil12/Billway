@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../providers.dart';
-import '../features/auth/domain/entities/user.dart';
+import '../../features/auth/domain/entities/user.dart';
 
 class AppShell extends ConsumerWidget {
   final Widget child;

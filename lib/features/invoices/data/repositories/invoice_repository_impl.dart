@@ -20,15 +20,21 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
     try {
       final localInvoices = await localDataSource.getInvoices(search: search);
       
-      try {
-        final remoteInvoices = await remoteDataSource.getInvoices(page, search);
-        await localDataSource.upsertInvoices(remoteInvoices.results as List<InvoiceModel>);
-        return Right(remoteInvoices);
-      } catch (e) {
-        return Right(PaginatedInvoicesModel(count: localInvoices.length, results: localInvoices));
-      }
+      // Fire and forget background sync
+      _syncRemoteInvoices(page, search);
+      
+      return Right(PaginatedInvoicesModel(count: localInvoices.length, results: localInvoices));
     } catch (e) {
       return const Left(ServerFailure('Failed to fetch invoices'));
+    }
+  }
+
+  Future<void> _syncRemoteInvoices(int page, String? search) async {
+    try {
+      final remoteInvoices = await remoteDataSource.getInvoices(page, search);
+      await localDataSource.upsertInvoices(remoteInvoices.results as List<InvoiceModel>);
+    } catch (_) {
+      // Ignore background sync errors
     }
   }
 
