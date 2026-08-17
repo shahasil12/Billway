@@ -83,6 +83,7 @@ class InvoiceModel extends Invoice {
       'reference': reference,
       'discount_percentage': discountPercentage,
       'payment_method': paymentMethod,
+      'amount_paid': amountPaid,
       'items': items.map((i) => {
         'product': i.productId,
         'quantity': i.quantity,

@@ -16,12 +16,12 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
   InvoiceRepositoryImpl(this.remoteDataSource, this.localDataSource, this.syncService);
 
   @override
-  Future<Either<Failure, PaginatedInvoices>> getInvoices({int page = 1, String? search}) async {
+  Future<Either<Failure, PaginatedInvoices>> getInvoices({int page = 1, String? search, String? status, int? customerId}) async {
     try {
-      final localInvoices = await localDataSource.getInvoices(search: search);
+      final localInvoices = await localDataSource.getInvoices(search: search, status: status, customerId: customerId);
       
       // Fire and forget background sync
-      _syncRemoteInvoices(page, search);
+      _syncRemoteInvoices(page, search, status, customerId);
       
       return Right(PaginatedInvoicesModel(count: localInvoices.length, results: localInvoices));
     } catch (e) {
@@ -29,9 +29,9 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
     }
   }
 
-  Future<void> _syncRemoteInvoices(int page, String? search) async {
+  Future<void> _syncRemoteInvoices(int page, String? search, String? status, int? customerId) async {
     try {
-      final remoteInvoices = await remoteDataSource.getInvoices(page, search);
+      final remoteInvoices = await remoteDataSource.getInvoices(page, search, status, customerId);
       await localDataSource.upsertInvoices(remoteInvoices.results as List<InvoiceModel>);
     } catch (_) {
       // Ignore background sync errors

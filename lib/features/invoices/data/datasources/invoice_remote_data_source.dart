@@ -3,7 +3,7 @@ import '../models/invoice_model.dart';
 import '../../domain/entities/invoice.dart';
 
 abstract class InvoiceRemoteDataSource {
-  Future<PaginatedInvoicesModel> getInvoices(int page, String? search);
+  Future<PaginatedInvoicesModel> getInvoices(int page, String? search, String? status, int? customerId);
   Future<InvoiceModel> getInvoice(int id);
   Future<InvoiceModel> createInvoice(Invoice invoice);
   Future<void> deleteInvoice(int id);
@@ -15,9 +15,11 @@ class InvoiceRemoteDataSourceImpl implements InvoiceRemoteDataSource {
   InvoiceRemoteDataSourceImpl(this.apiClient);
 
   @override
-  Future<PaginatedInvoicesModel> getInvoices(int page, String? search) async {
+  Future<PaginatedInvoicesModel> getInvoices(int page, String? search, String? status, int? customerId) async {
     final Map<String, dynamic> queryParameters = {'page': page};
     if (search != null && search.isNotEmpty) queryParameters['search'] = search;
+    if (status != null && status.isNotEmpty) queryParameters['status'] = status;
+    if (customerId != null) queryParameters['customer'] = customerId;
     
     final response = await apiClient.dio.get('invoices/', queryParameters: queryParameters);
     return PaginatedInvoicesModel.fromJson(response.data);

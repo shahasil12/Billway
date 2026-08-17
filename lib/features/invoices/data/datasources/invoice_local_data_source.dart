@@ -5,7 +5,7 @@ import '../models/invoice_model.dart';
 import '../../domain/entities/invoice.dart';
 
 abstract class InvoiceLocalDataSource {
-  Future<List<InvoiceModel>> getInvoices({String? search, String? status});
+  Future<List<InvoiceModel>> getInvoices({String? search, String? status, int? customerId});
   Future<InvoiceModel?> getInvoice(int id);
   Future<InvoiceModel> createInvoice(InvoiceModel invoice);
   Future<InvoiceModel> updateInvoice(InvoiceModel invoice);
@@ -19,7 +19,7 @@ class InvoiceLocalDataSourceImpl implements InvoiceLocalDataSource {
   InvoiceLocalDataSourceImpl({required this.dbHelper});
 
   @override
-  Future<List<InvoiceModel>> getInvoices({String? search, String? status}) async {
+  Future<List<InvoiceModel>> getInvoices({String? search, String? status, int? customerId}) async {
     final db = await dbHelper.database;
     
     String where = '';
@@ -34,6 +34,12 @@ class InvoiceLocalDataSourceImpl implements InvoiceLocalDataSource {
       if (where.isNotEmpty) where += ' AND ';
       where += 'status = ?';
       whereArgs.add(status);
+    }
+    
+    if (customerId != null) {
+      if (where.isNotEmpty) where += ' AND ';
+      where += 'customer_id = ?';
+      whereArgs.add(customerId);
     }
 
     final maps = await db.query(

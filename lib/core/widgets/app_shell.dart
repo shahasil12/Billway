@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../providers.dart';
+import 'package:flutter/services.dart';
 import '../../features/auth/domain/entities/user.dart';
 
 class AppShell extends ConsumerWidget {
@@ -23,21 +24,53 @@ class AppShell extends ConsumerWidget {
     final user = authState.value;
     final isCashier = user?.role == UserRole.cashier;
 
-    if (isTablet) {
-      return Scaffold(
-        body: Row(
-          children: [
-            _buildNavigationRail(context, currentIndex, isCashier),
-            Expanded(child: child),
-          ],
-        ),
-      );
-    } else {
-      return Scaffold(
-        body: child,
-        bottomNavigationBar: _buildBottomNav(context, currentIndex, isCashier),
-      );
-    }
+    final Widget shell = isTablet ? Scaffold(
+      body: Row(
+        children: [
+          _buildNavigationRail(context, currentIndex, isCashier),
+          Expanded(child: child),
+        ],
+      ),
+    ) : Scaffold(
+      body: child,
+      bottomNavigationBar: _buildBottomNav(context, currentIndex, isCashier),
+    );
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        
+        if (GoRouter.of(context).canPop()) {
+           GoRouter.of(context).pop();
+           return;
+        }
+
+        final bool? shouldPop = await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Exit App'),
+              content: const Text('Are you sure you want to exit the app?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Exit', style: const TextStyle(color: Colors.red)),
+                ),
+              ],
+            );
+          },
+        );
+        if (shouldPop ?? false) {
+           SystemNavigator.pop();
+        }
+      },
+      child: shell,
+    );
   }
 
   int _calculateSelectedIndex(String location) {
