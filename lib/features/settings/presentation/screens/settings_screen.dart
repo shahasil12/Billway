@@ -156,6 +156,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           const SizedBox(height: AppSpacing.p32),
                         ],
                         
+                        if (user?.role == UserRole.admin || user?.role == UserRole.manager) ...[
+                          Text('Management', style: AppTextStyles.h3),
+                          const SizedBox(height: AppSpacing.p16),
+                          AppCard(
+                            padding: EdgeInsets.zero,
+                            child: Column(
+                              children: [
+                                ListTile(
+                                  leading: const Icon(Icons.people, color: AppColors.primary),
+                                  title: const Text('Customers'),
+                                  trailing: const Icon(Icons.chevron_right),
+                                  onTap: () => context.push('/customers'),
+                                ),
+                                const Divider(height: 1),
+                                ListTile(
+                                  leading: const Icon(Icons.category, color: AppColors.primary),
+                                  title: const Text('Categories'),
+                                  trailing: const Icon(Icons.chevron_right),
+                                  onTap: () => context.push('/categories'),
+                                ),
+                                const Divider(height: 1),
+                                ListTile(
+                                  leading: const Icon(Icons.bar_chart, color: AppColors.primary),
+                                  title: const Text('Reports'),
+                                  trailing: const Icon(Icons.chevron_right),
+                                  onTap: () => context.push('/reports'),
+                                ),
+                              ],
+                            )
+                          ),
+                          const SizedBox(height: AppSpacing.p32),
+                        ],
+                        
                         if (user?.role == UserRole.cashier) ...[
                           const SizedBox(height: AppSpacing.p32),
                           const Center(

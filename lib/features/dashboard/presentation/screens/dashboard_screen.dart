@@ -179,8 +179,17 @@ class DashboardScreen extends ConsumerWidget {
               subtitle: inv.customerName == 'Unknown' ? 'POS Sale' : 'Invoice #${inv.id}',
               trailing: Text('$currency${inv.totalAmount.toStringAsFixed(2)}', style: AppTextStyles.financialLine),
               onTap: () async {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (ctx) => const Center(child: CircularProgressIndicator()),
+                );
                 final repo = ref.read(invoiceRepositoryProvider);
-                final result = await repo.getInvoice(inv.id!);
+                final result = await repo.getInvoice(inv.id);
+                if (context.mounted) {
+                  Navigator.pop(context); // hide loading
+                }
+                
                 result.fold(
                   (failure) {
                     if (context.mounted) {
