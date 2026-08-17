@@ -538,7 +538,10 @@ class _AddProductBottomSheetState extends ConsumerState<_AddProductBottomSheet> 
               ),
             ),
             value: _selectedProduct,
-            items: products.map((p) => DropdownMenuItem(value: p, child: Text('${p.name} (Stock: ${p.stock})'))).toList(),
+            items: products.map((p) => DropdownMenuItem(
+              value: p, 
+              child: Text(p.trackStock ? '${p.name} (Stock: ${p.stock})' : p.name)
+            )).toList(),
             onChanged: (val) => setState(() {
               _selectedProduct = val;
               _qty = 1;
@@ -574,8 +577,8 @@ class _AddProductBottomSheetState extends ConsumerState<_AddProductBottomSheet> 
               label: 'Add to Cart',
               onPressed: () {
                 if (_selectedProduct != null) {
-                  if (_qty > _selectedProduct!.stock) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Not enough stock. Max: ${_selectedProduct!.stock}')));
+                  if (_selectedProduct!.trackStock && _qty > _selectedProduct!.stock) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Not enough stock. Available: ${_selectedProduct!.stock}')));
                     return;
                   }
                   widget.onAdd(_selectedProduct!, _qty);

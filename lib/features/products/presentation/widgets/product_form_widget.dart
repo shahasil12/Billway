@@ -45,6 +45,11 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
   bool _isActive = true;
   File? _imageFile;
   bool _isAdvancedExpanded = false;
+  
+  String _productType = 'NORMAL';
+  bool _trackStock = false;
+  late TextEditingController _minStockController;
+  String _unit = 'Piece';
 
   @override
   void initState() {
@@ -55,8 +60,12 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
     _barcodeController = TextEditingController(text: widget.initialProduct?.barcode ?? '');
     _descriptionController = TextEditingController(text: widget.initialProduct?.description ?? '');
     _stockController = TextEditingController(text: widget.initialProduct?.stock.toString() ?? '0');
+    _minStockController = TextEditingController(text: widget.initialProduct?.minStock.toString() ?? '0');
     _selectedCategoryId = widget.initialProduct?.categoryId;
     _isActive = widget.initialProduct?.status ?? true;
+    _productType = widget.initialProduct?.productType ?? 'NORMAL';
+    _trackStock = widget.initialProduct?.trackStock ?? false;
+    _unit = widget.initialProduct?.unit ?? 'Piece';
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(categoryListProvider.notifier).fetchCategories();
@@ -71,6 +80,7 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
     _barcodeController.dispose();
     _descriptionController.dispose();
     _stockController.dispose();
+    _minStockController.dispose();
     super.dispose();
   }
 
@@ -126,11 +136,15 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
         id: widget.initialProduct?.id,
         name: _nameController.text.trim(),
         categoryId: _selectedCategoryId,
+        productType: _productType,
+        trackStock: _trackStock,
+        minStock: int.tryParse(_minStockController.text.trim()) ?? 0,
+        unit: _unit,
         price: double.parse(_priceController.text.trim()),
         taxPercentage: double.parse(_taxController.text.trim()),
         barcode: _barcodeController.text.trim(),
         description: _descriptionController.text.trim(),
-        stock: int.parse(_stockController.text.trim()),
+        stock: int.tryParse(_stockController.text.trim()) ?? 0,
         status: _isActive,
       );
       widget.onSubmit(product, _imageFile?.path);
@@ -260,17 +274,70 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
           
           const SizedBox(height: AppSpacing.p24),
           
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(labelText: 'Product Type'),
+                  value: _productType,
+                  items: const [
+                    DropdownMenuItem(value: 'NORMAL', child: Text('Normal Product')),
+                    DropdownMenuItem(value: 'FOOD', child: Text('Food Item')),
+                  ],
+                  onChanged: (val) => setState(() => _productType = val!),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.p16),
+              Expanded(
+                child: SwitchListTile(
+                  title: const Text('Track Stock'),
+                  value: _trackStock,
+                  onChanged: (val) => setState(() => _trackStock = val),
+                ),
+              ),
+            ],
+          ),
+          if (_trackStock) ...[
+            const SizedBox(height: AppSpacing.p16),
+            Row(
+              children: [
+                Expanded(
+                  child: AppTextField(
+                    label: widget.initialProduct == null ? 'Opening Stock' : 'Current Stock',
+                    controller: _stockController,
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.p16),
+                Expanded(
+                  child: AppTextField(
+                    label: 'Min Stock',
+                    controller: _minStockController,
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.p16),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(labelText: 'Unit'),
+                    value: _unit,
+                    items: const [
+                      'Piece', 'Kg', 'Gram', 'Liter', 'ML', 'Plate', 'Packet', 'Box', 'Bottle'
+                    ].map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
+                    onChanged: (val) => setState(() => _unit = val!),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          
+          const SizedBox(height: AppSpacing.p24),
+          
           ExpansionTile(
             title: const Text('Advanced', style: AppTextStyles.h3),
             tilePadding: EdgeInsets.zero,
             onExpansionChanged: (val) => setState(() => _isAdvancedExpanded = val),
             children: [
-              const SizedBox(height: AppSpacing.p16),
-              AppTextField(
-                label: 'Stock',
-                controller: _stockController,
-                keyboardType: TextInputType.number,
-              ),
               const SizedBox(height: AppSpacing.p16),
               TextFormField(
                 controller: _barcodeController,

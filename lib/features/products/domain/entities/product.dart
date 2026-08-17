@@ -8,6 +8,10 @@ class Product {
   final String? barcode;
   final String? description;
   final String? image;
+  final String productType;
+  final bool trackStock;
+  final int minStock;
+  final String unit;
   final int stock;
   final bool status;
   final String? createdAt;
@@ -22,6 +26,10 @@ class Product {
     this.barcode,
     this.description,
     this.image,
+    this.productType = 'NORMAL',
+    this.trackStock = false,
+    this.minStock = 0,
+    this.unit = 'Piece',
     this.stock = 0,
     this.status = true,
     this.createdAt,
@@ -37,6 +45,10 @@ class Product {
     String? barcode,
     String? description,
     String? image,
+    String? productType,
+    bool? trackStock,
+    int? minStock,
+    String? unit,
     int? stock,
     bool? status,
     String? createdAt,
@@ -51,6 +63,10 @@ class Product {
       barcode: barcode ?? this.barcode,
       description: description ?? this.description,
       image: image ?? this.image,
+      productType: productType ?? this.productType,
+      trackStock: trackStock ?? this.trackStock,
+      minStock: minStock ?? this.minStock,
+      unit: unit ?? this.unit,
       stock: stock ?? this.stock,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,

@@ -367,7 +367,7 @@ class DashboardScreen extends ConsumerWidget {
     } else {
       return Container(
         margin: const EdgeInsets.only(bottom: 22),
-        height: 120,
+        height: 145,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: children.length,
