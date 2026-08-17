@@ -14,7 +14,7 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
 
   @override
   Future<SettingsModel> getSettings() async {
-    final response = await apiClient.dio.get('settings/');
+    final response = await apiClient.dio.get('auth/company/');
     return SettingsModel.fromJson(response.data);
   }
 
@@ -31,7 +31,7 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
       defaultTaxPercentage: settings.defaultTaxPercentage,
       currency: settings.currency,
     );
-    final response = await apiClient.dio.put('settings/', data: model.toJson());
+    final response = await apiClient.dio.put('auth/company/', data: model.toJson());
     return SettingsModel.fromJson(response.data);
   }
 }

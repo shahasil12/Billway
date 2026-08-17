@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
+import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/auth/presentation/screens/home_screen.dart';
 import '../features/auth/presentation/screens/splash_screen.dart';
 import 'widgets/app_shell.dart';
@@ -52,6 +53,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/splash',
     redirect: (context, state) {
       final isLoggingIn = state.uri.path == '/login';
+      final isRegistering = state.uri.path == '/register';
       final isSplash = state.uri.path == '/splash';
       final authState = ref.read(authStateProvider);
       
@@ -61,11 +63,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       
       final isAuthenticated = authState.value != null;
       
-      if (!isAuthenticated && !isLoggingIn && !isSplash) {
+      if (!isAuthenticated && !isLoggingIn && !isRegistering && !isSplash) {
         return '/login';
       }
       
-      if (isAuthenticated && (isLoggingIn || isSplash)) {
+      if (isAuthenticated && (isLoggingIn || isRegistering || isSplash)) {
         return '/';
       }
       
@@ -79,6 +81,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         pageBuilder: (context, state) => _fadeTransition(const LoginScreen(), state),
+      ),
+      GoRoute(
+        path: '/register',
+        pageBuilder: (context, state) => _fadeTransition(const RegisterScreen(), state),
       ),
       ShellRoute(
         builder: (context, state, child) {

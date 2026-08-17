@@ -7,6 +7,7 @@ abstract class AuthRemoteDataSource {
   Future<void> logout(String refreshToken);
   Future<UserModel> getCurrentUser();
   Future<void> changePassword(String oldPassword, String newPassword);
+  Future<Map<String, dynamic>> register(String companyName, String username, String email, String password);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -42,5 +43,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       'old_password': oldPassword,
       'new_password': newPassword,
     });
+  }
+
+  @override
+  Future<Map<String, dynamic>> register(String companyName, String username, String email, String password) async {
+    final response = await apiClient.dio.post('auth/register/', data: {
+      'company_name': companyName,
+      'username': username,
+      'email': email,
+      'password': password,
+    });
+    return response.data;
   }
 }

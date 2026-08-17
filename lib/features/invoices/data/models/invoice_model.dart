@@ -79,8 +79,7 @@ class InvoiceModel extends Invoice {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'customer': customerId,
+    final data = <String, dynamic>{
       'reference': reference,
       'discount_percentage': discountPercentage,
       'payment_method': paymentMethod,
@@ -89,6 +88,10 @@ class InvoiceModel extends Invoice {
         'quantity': i.quantity,
       }).toList(),
     };
+    if (customerId != 0) {
+      data['customer'] = customerId;
+    }
+    return data;
   }
 }
 

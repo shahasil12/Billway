@@ -16,8 +16,8 @@ class SettingsModel extends Settings {
   factory SettingsModel.fromJson(Map<String, dynamic> json) {
     return SettingsModel(
       id: json['id'] ?? 1,
-      businessName: json['business_name'] ?? '',
-      businessAddress: json['business_address'] ?? '',
+      businessName: json['name'] ?? '',
+      businessAddress: json['address'] ?? '',
       phoneNumber: json['phone_number'] ?? '',
       gstNumber: json['gst_number'],
       invoicePrefix: json['invoice_prefix'] ?? 'INV-',
@@ -29,8 +29,8 @@ class SettingsModel extends Settings {
 
   Map<String, dynamic> toJson() {
     return {
-      'business_name': businessName,
-      'business_address': businessAddress,
+      'name': businessName,
+      'address': businessAddress,
       'phone_number': phoneNumber,
       'gst_number': gstNumber,
       'invoice_prefix': invoicePrefix,

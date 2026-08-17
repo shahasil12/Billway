@@ -131,7 +131,7 @@ class POSCartController extends StateNotifier<POSCartState> {
     state = state.copyWith(isProcessing: true, clearError: true);
 
     final invoice = Invoice(
-      customerId: state.customer?.id,
+      customerId: state.customer?.id ?? 0,
       subtotal: state.subtotal,
       discountPercentage: state.discountPercentage,
       discountAmount: state.discountAmount,

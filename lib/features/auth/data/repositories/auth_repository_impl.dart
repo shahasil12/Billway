@@ -30,6 +30,25 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, User>> register(String companyName, String username, String email, String password) async {
+    try {
+      await remoteDataSource.register(companyName, username, email, password);
+      return login(username, password);
+    } on DioException catch (e) {
+      String errorMessage = 'Registration failed';
+      if (e.response?.data != null && e.response?.data is Map) {
+         final data = e.response?.data as Map<String, dynamic>;
+         if (data.values.isNotEmpty && data.values.first is List && data.values.first.isNotEmpty) {
+             errorMessage = data.values.first[0].toString();
+         }
+      }
+      return Left(ServerFailure(errorMessage));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> logout() async {
     try {
       final refresh = await localDataSource.getRefreshToken();
