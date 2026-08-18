@@ -46,6 +46,10 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
   }
   
   void _refreshInvoice() async {
+    await _refreshInvoiceAsync();
+  }
+
+  Future<void> _refreshInvoiceAsync() async {
     final result = await ref.read(invoiceRepositoryProvider).getInvoice(_invoice.id!);
     result.fold(
       (l) => null,
@@ -80,14 +84,17 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
   Future<void> _downloadAndOpenPdf() async {
     setState(() => _isDownloading = true);
     try {
+      // Refresh to get the latest remote ID if it was just synced
+      await _refreshInvoiceAsync();
+      
       final dio = ref.read(apiClientProvider).dio;
       final response = await dio.get(
-        'invoices/${widget.invoice.id}/pdf/',
+        'invoices/${_invoice.id}/pdf/',
         options: Options(responseType: ResponseType.bytes),
       );
       
       final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/invoice_${widget.invoice.id}.pdf');
+      final file = File('${dir.path}/invoice_${_invoice.id}.pdf');
       await file.writeAsBytes(response.data);
       
       await OpenFile.open(file.path);

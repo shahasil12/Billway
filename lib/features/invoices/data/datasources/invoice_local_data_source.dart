@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import '../../../../core/database/database_helper.dart';
 import '../models/invoice_model.dart';
 import '../../domain/entities/invoice.dart';
+import '../../../customers/data/models/customer_model.dart';
 
 abstract class InvoiceLocalDataSource {
   Future<List<InvoiceModel>> getInvoices({String? search, String? status, int? customerId});
@@ -26,28 +27,35 @@ class InvoiceLocalDataSourceImpl implements InvoiceLocalDataSource {
     List<dynamic> whereArgs = [];
 
     if (search != null && search.isNotEmpty) {
-      where = 'reference LIKE ?';
+      where = 'i.reference LIKE ?';
       whereArgs = ['%$search%'];
     }
 
     if (status != null && status.isNotEmpty) {
       if (where.isNotEmpty) where += ' AND ';
-      where += 'status = ?';
+      where += 'i.status = ?';
       whereArgs.add(status);
     }
     
     if (customerId != null) {
       if (where.isNotEmpty) where += ' AND ';
-      where += 'customer_id = ?';
+      where += 'i.customer_id = ?';
       whereArgs.add(customerId);
     }
 
-    final maps = await db.query(
-      'invoices',
-      where: where.isEmpty ? null : where,
-      whereArgs: whereArgs.isEmpty ? null : whereArgs,
-      orderBy: 'local_id DESC',
-    );
+    final maps = await db.rawQuery('''
+      SELECT 
+        i.*,
+        c.id as c_id,
+        c.local_id as c_local_id,
+        c.name as c_name,
+        c.email as c_email,
+        c.phone as c_phone
+      FROM invoices i
+      LEFT JOIN customers c ON i.customer_id = c.id OR i.customer_id = c.local_id
+      ${where.isNotEmpty ? 'WHERE $where' : ''}
+      ORDER BY i.local_id DESC
+    ''', whereArgs.isEmpty ? null : whereArgs);
 
     return maps.map((map) {
       List<InvoiceItemModel> items = [];
@@ -56,9 +64,20 @@ class InvoiceLocalDataSourceImpl implements InvoiceLocalDataSource {
         items = itemsList.map((i) => InvoiceItemModel.fromJson(i)).toList();
       }
 
+      CustomerModel? customer;
+      if (map['c_name'] != null) {
+        customer = CustomerModel(
+          id: (map['c_id'] ?? map['c_local_id']) as int?,
+          name: map['c_name'] as String,
+          email: map['c_email'] as String?,
+          phone: map['c_phone'] as String?,
+        );
+      }
+
       return InvoiceModel(
         id: (map['id'] ?? map['local_id']) as int,
         customerId: map['customer_id'] as int,
+        customer: customer,
         reference: map['reference'] as String?,
         subtotal: (map['subtotal'] as num?)?.toDouble() ?? 0.0,
         discountPercentage: (map['discount_percentage'] as num?)?.toDouble() ?? 0.0,
@@ -78,11 +97,18 @@ class InvoiceLocalDataSourceImpl implements InvoiceLocalDataSource {
   @override
   Future<InvoiceModel?> getInvoice(int id) async {
     final db = await dbHelper.database;
-    final maps = await db.query(
-      'invoices',
-      where: 'id = ? OR local_id = ?',
-      whereArgs: [id, id],
-    );
+    final maps = await db.rawQuery('''
+      SELECT 
+        i.*,
+        c.id as c_id,
+        c.local_id as c_local_id,
+        c.name as c_name,
+        c.email as c_email,
+        c.phone as c_phone
+      FROM invoices i
+      LEFT JOIN customers c ON i.customer_id = c.id OR i.customer_id = c.local_id
+      WHERE i.id = ? OR i.local_id = ?
+    ''', [id, id]);
 
     if (maps.isNotEmpty) {
       final map = maps.first;
@@ -92,9 +118,20 @@ class InvoiceLocalDataSourceImpl implements InvoiceLocalDataSource {
         items = itemsList.map((i) => InvoiceItemModel.fromJson(i)).toList();
       }
 
+      CustomerModel? customer;
+      if (map['c_name'] != null) {
+        customer = CustomerModel(
+          id: (map['c_id'] ?? map['c_local_id']) as int?,
+          name: map['c_name'] as String,
+          email: map['c_email'] as String?,
+          phone: map['c_phone'] as String?,
+        );
+      }
+
       return InvoiceModel(
         id: (map['id'] ?? map['local_id']) as int,
         customerId: map['customer_id'] as int,
+        customer: customer,
         reference: map['reference'] as String?,
         subtotal: (map['subtotal'] as num?)?.toDouble() ?? 0.0,
         discountPercentage: (map['discount_percentage'] as num?)?.toDouble() ?? 0.0,

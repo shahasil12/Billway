@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import '../network/api_client.dart';
 
@@ -27,8 +28,8 @@ class SyncService {
       'status': 'PENDING',
       'created_at': DateTime.now().toIso8601String(),
     });
-    // Don't call syncPendingData() here — it could block the caller if Render is slow.
-    // The connectivity listener above will handle syncing when network is available.
+    // Trigger sync immediately but don't await to avoid blocking UI
+    syncPendingData();
   }
 
   Future<void> syncPendingData() async {
@@ -80,6 +81,11 @@ class SyncService {
       if (entityType == 'CUSTOMER') endpoint = 'customers/';
       else if (entityType == 'PRODUCT') endpoint = 'products/';
       else if (entityType == 'INVOICE') endpoint = 'invoices/';
+
+      if (action == 'CREATE' || action == 'UPDATE') {
+        final db = await dbHelper.database;
+        await _resolveForeignKeys(db, entityType, payload);
+      }
 
       if (action == 'CREATE') {
         final response = await apiClient.dio.post(endpoint, data: payload);
@@ -156,5 +162,38 @@ class SyncService {
               whereArgs: [localId, localId] 
           );
       }
+  }
+
+  Future<void> _resolveForeignKeys(Database db, String entityType, Map<String, dynamic> payload) async {
+    if (entityType == 'INVOICE') {
+      final customerId = payload['customer'];
+      if (customerId != null && customerId != 0) {
+        final maps = await db.query('customers', columns: ['id'], where: 'local_id = ? OR id = ?', whereArgs: [customerId, customerId]);
+        if (maps.isNotEmpty && maps.first['id'] != null) {
+          payload['customer'] = maps.first['id'];
+        }
+      }
+
+      final items = payload['items'] as List?;
+      if (items != null) {
+        for (var item in items) {
+          final productId = item['product'];
+          if (productId != null) {
+            final maps = await db.query('products', columns: ['id'], where: 'local_id = ? OR id = ?', whereArgs: [productId, productId]);
+            if (maps.isNotEmpty && maps.first['id'] != null) {
+              item['product'] = maps.first['id'];
+            }
+          }
+        }
+      }
+    } else if (entityType == 'PRODUCT') {
+      final categoryId = payload['category'];
+      if (categoryId != null && categoryId != 0) {
+        final maps = await db.query('categories', columns: ['id'], where: 'local_id = ? OR id = ?', whereArgs: [categoryId, categoryId]);
+        if (maps.isNotEmpty && maps.first['id'] != null) {
+          payload['category'] = maps.first['id'];
+        }
+      }
+    }
   }
 }
