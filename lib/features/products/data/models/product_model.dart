@@ -50,6 +50,7 @@ class ProductModel extends Product {
       'tax_percentage': taxPercentage,
       if (barcode != null) 'barcode': barcode,
       if (description != null) 'description': description,
+      if (image != null) 'image': image,
       'product_type': productType,
       'track_stock': trackStock,
       'min_stock': minStock,

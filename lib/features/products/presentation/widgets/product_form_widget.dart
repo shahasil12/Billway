@@ -86,7 +86,7 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
+    final pickedFile = await picker.pickImage(source: source, imageQuality: 50);
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);

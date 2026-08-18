@@ -32,8 +32,47 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     return ProductModel.fromJson(response.data);
   }
 
+  Future<String?> _uploadImage(String imagePath) async {
+    try {
+      final fileName = imagePath.split('/').last;
+      
+      // 1. Get presigned URL
+      final urlResponse = await apiClient.dio.post('core/generate-upload-url/', data: {
+        'file_name': fileName,
+        'content_type': 'image/jpeg', // Could be dynamic based on ext
+      });
+      
+      final uploadUrl = urlResponse.data['upload_url'];
+      final publicUrl = urlResponse.data['public_url'];
+      
+      // 2. Upload directly to S3/Supabase
+      final file = await MultipartFile.fromFile(imagePath);
+      final rawDio = Dio(); // Raw dio without base URL or auth interceptors
+      await rawDio.put(
+        uploadUrl,
+        data: file.finalize(),
+        options: Options(
+          headers: {
+            'Content-Type': 'image/jpeg',
+            'Content-Length': file.length,
+          },
+        ),
+      );
+      
+      return publicUrl;
+    } catch (e) {
+      print('Error uploading image: $e');
+      return null;
+    }
+  }
+
   @override
   Future<ProductModel> createProduct(Product product, {String? imagePath}) async {
+    String? imageUrl;
+    if (imagePath != null) {
+      imageUrl = await _uploadImage(imagePath);
+    }
+
     final model = ProductModel(
       name: product.name,
       price: product.price,
@@ -41,28 +80,22 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       taxPercentage: product.taxPercentage,
       barcode: product.barcode,
       description: product.description,
+      image: imageUrl,
       stock: product.stock,
       status: product.status,
     );
 
-    dynamic data;
-    if (imagePath != null) {
-      final formData = FormData.fromMap(model.toJson());
-      formData.files.add(MapEntry(
-        'image',
-        await MultipartFile.fromFile(imagePath),
-      ));
-      data = formData;
-    } else {
-      data = model.toJson();
-    }
-
-    final response = await apiClient.dio.post('products/', data: data);
+    final response = await apiClient.dio.post('products/', data: model.toJson());
     return ProductModel.fromJson(response.data);
   }
 
   @override
   Future<ProductModel> updateProduct(Product product, {String? imagePath}) async {
+    String? imageUrl = product.image;
+    if (imagePath != null) {
+      imageUrl = await _uploadImage(imagePath);
+    }
+
     final model = ProductModel(
       id: product.id,
       name: product.name,
@@ -71,23 +104,12 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
       taxPercentage: product.taxPercentage,
       barcode: product.barcode,
       description: product.description,
+      image: imageUrl,
       stock: product.stock,
       status: product.status,
     );
 
-    dynamic data;
-    if (imagePath != null) {
-      final formData = FormData.fromMap(model.toJson());
-      formData.files.add(MapEntry(
-        'image',
-        await MultipartFile.fromFile(imagePath),
-      ));
-      data = formData;
-    } else {
-      data = model.toJson();
-    }
-
-    final response = await apiClient.dio.patch('products/${product.id}/', data: data);
+    final response = await apiClient.dio.patch('products/${product.id}/', data: model.toJson());
     return ProductModel.fromJson(response.data);
   }
 
