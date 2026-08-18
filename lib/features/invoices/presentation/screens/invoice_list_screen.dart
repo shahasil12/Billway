@@ -63,6 +63,10 @@ class _InvoiceListScreenState extends ConsumerState<InvoiceListScreen> {
       appBar: AppBar(
         title: const Text('Invoices'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => ref.read(invoiceListProvider.notifier).fetchInvoices(isRefresh: true),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.p16),
             child: PrimaryButton(

@@ -57,6 +57,10 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
       appBar: AppBar(
         title: const Text('Customers'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => ref.read(customerListProvider.notifier).fetchCustomers(isRefresh: true),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.p16),
             child: PrimaryButton(

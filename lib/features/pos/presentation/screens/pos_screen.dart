@@ -393,6 +393,15 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       appBar: AppBar(
         title: const Text('Point of Sale'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              ref.read(productListProvider.notifier).fetchProducts(isRefresh: true);
+              ref.read(categoryListProvider.notifier).fetchCategories(isRefresh: true);
+              ref.read(customerListProvider.notifier).fetchCustomers(isRefresh: true);
+            },
+            tooltip: 'Refresh Data',
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.p8),
             child: SecondaryButton(
@@ -469,7 +478,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
       children: [
         // CATEGORIES TABS
         SizedBox(
-          height: 56,
+          height: 65,
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.p16, vertical: AppSpacing.p8),

@@ -126,9 +126,25 @@ class CustomerLocalDataSourceImpl implements CustomerLocalDataSource {
   Future<void> upsertCustomers(List<CustomerModel> customers) async {
     final db = await dbHelper.database;
     final batch = db.batch();
+    final dirtyDocs = await db.query('customers', columns: ['id'], where: 'is_synced = 0');
+    final dirtyIds = dirtyDocs.map((e) => e['id']).toSet();
+
+    final pendingDeletes = await db.query(
+      'sync_queue',
+      columns: ['payload'],
+      where: "entity_type = 'CUSTOMER' AND action = 'DELETE' AND status = 'PENDING'",
+    );
+    final deletedIds = pendingDeletes.map((e) {
+      final payloadStr = e['payload'] as String;
+      // Extract "id": <number> using regex or simple parsing
+      final match = RegExp(r'"id":\s*(\d+)').firstMatch(payloadStr);
+      return match != null ? int.parse(match.group(1)!) : null;
+    }).where((id) => id != null).toSet();
 
     for (var customer in customers) {
       if (customer.id == null) continue;
+      if (dirtyIds.contains(customer.id)) continue;
+      if (deletedIds.contains(customer.id)) continue;
       batch.insert(
         'customers',
         {

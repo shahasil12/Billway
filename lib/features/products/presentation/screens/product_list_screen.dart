@@ -67,6 +67,10 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
       appBar: AppBar(
         title: const Text('Products'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => ref.read(productListProvider.notifier).fetchProducts(isRefresh: true),
+          ),
           if (ref.watch(authStateProvider).value?.role != UserRole.cashier)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.p16),

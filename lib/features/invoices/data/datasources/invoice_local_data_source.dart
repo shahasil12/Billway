@@ -219,9 +219,24 @@ class InvoiceLocalDataSourceImpl implements InvoiceLocalDataSource {
   Future<void> upsertInvoices(List<InvoiceModel> invoices) async {
     final db = await dbHelper.database;
     final batch = db.batch();
+    final dirtyDocs = await db.query('invoices', columns: ['id'], where: 'is_synced = 0');
+    final dirtyIds = dirtyDocs.map((e) => e['id']).toSet();
+
+    final pendingDeletes = await db.query(
+      'sync_queue',
+      columns: ['payload'],
+      where: "entity_type = 'INVOICE' AND action = 'DELETE' AND status = 'PENDING'",
+    );
+    final deletedIds = pendingDeletes.map((e) {
+      final payloadStr = e['payload'] as String;
+      final match = RegExp(r'"id":\s*(\d+)').firstMatch(payloadStr);
+      return match != null ? int.parse(match.group(1)!) : null;
+    }).where((id) => id != null).toSet();
 
     for (var invoice in invoices) {
       if (invoice.id == null) continue;
+      if (dirtyIds.contains(invoice.id)) continue;
+      if (deletedIds.contains(invoice.id)) continue;
       
       final itemsList = invoice.items.map((e) => {
         'product': e.productId,

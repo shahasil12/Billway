@@ -16,8 +16,15 @@ class PdfInvoiceGenerator {
     const textColor = PdfColor.fromInt(0xFF1F2937); // Dark Gray
     const lightText = PdfColor.fromInt(0xFF6B7280); // Gray
 
+    final font = await PdfGoogleFonts.notoSansRegular();
+    final boldFont = await PdfGoogleFonts.notoSansBold();
+
     pdf.addPage(
       pw.MultiPage(
+        theme: pw.ThemeData.withFont(
+          base: font,
+          bold: boldFont,
+        ),
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(40),
         build: (pw.Context context) {

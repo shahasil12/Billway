@@ -147,6 +147,7 @@ class POSCartController extends StateNotifier<POSCartState> {
 
     final invoice = Invoice(
       customerId: state.customer?.id ?? 0,
+      customer: state.customer,
       subtotal: state.subtotal,
       discountPercentage: state.discountPercentage,
       discountAmount: state.discountAmount,

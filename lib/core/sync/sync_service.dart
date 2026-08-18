@@ -90,14 +90,30 @@ class SyncService {
               await _updateLocalId(entityType, localId, remoteId);
            }
         }
-      } else if (action == 'UPDATE') {
-        final id = payload['id'];
+      } else if (action == 'UPDATE' || action == 'DELETE') {
+        int? id = payload['id'];
         if (id == null) return false;
-        await apiClient.dio.put('$endpoint$id/', data: payload);
-      } else if (action == 'DELETE') {
-        final id = payload['id'];
-        if (id == null) return false;
-        await apiClient.dio.delete('$endpoint$id/');
+
+        // Resolve the actual remote ID if the payload has a local ID
+        final db = await dbHelper.database;
+        String table = '';
+        if (entityType == 'CUSTOMER') table = 'customers';
+        else if (entityType == 'PRODUCT') table = 'products';
+        else if (entityType == 'INVOICE') table = 'invoices';
+        
+        if (table.isNotEmpty) {
+           final maps = await db.query(table, columns: ['id'], where: 'local_id = ? OR id = ?', whereArgs: [id, id]);
+           if (maps.isNotEmpty && maps.first['id'] != null) {
+               id = maps.first['id'] as int;
+               payload['id'] = id;
+           }
+        }
+
+        if (action == 'UPDATE') {
+          await apiClient.dio.put('$endpoint$id/', data: payload);
+        } else {
+          await apiClient.dio.delete('$endpoint$id/');
+        }
       } else if (action == 'SESSION_OPEN') {
         final response = await apiClient.dio.post('pos/sessions/open/', data: payload);
         if (response.statusCode == 200 || response.statusCode == 201) {

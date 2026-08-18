@@ -59,6 +59,10 @@ class _CategoryListScreenState extends ConsumerState<CategoryListScreen> {
       appBar: AppBar(
         title: const Text('Categories'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => ref.read(categoryListProvider.notifier).fetchCategories(isRefresh: true),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.p16),
             child: PrimaryButton(

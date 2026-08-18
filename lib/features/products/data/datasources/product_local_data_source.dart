@@ -169,9 +169,24 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
   Future<void> upsertProducts(List<ProductModel> products) async {
     final db = await dbHelper.database;
     final batch = db.batch();
+    final dirtyDocs = await db.query('products', columns: ['id'], where: 'is_synced = 0');
+    final dirtyIds = dirtyDocs.map((e) => e['id']).toSet();
+
+    final pendingDeletes = await db.query(
+      'sync_queue',
+      columns: ['payload'],
+      where: "entity_type = 'PRODUCT' AND action = 'DELETE' AND status = 'PENDING'",
+    );
+    final deletedIds = pendingDeletes.map((e) {
+      final payloadStr = e['payload'] as String;
+      final match = RegExp(r'"id":\s*(\d+)').firstMatch(payloadStr);
+      return match != null ? int.parse(match.group(1)!) : null;
+    }).where((id) => id != null).toSet();
 
     for (var product in products) {
       if (product.id == null) continue;
+      if (dirtyIds.contains(product.id)) continue;
+      if (deletedIds.contains(product.id)) continue;
       batch.insert(
         'products',
         {

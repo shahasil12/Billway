@@ -227,7 +227,12 @@ CREATE TABLE sync_queue (
   Future<void> upsertCategories(List<Map<String, dynamic>> categories) async {
     final db = await instance.database;
     final batch = db.batch();
+    final dirtyDocs = await db.query('categories', columns: ['id'], where: 'is_synced = 0');
+    final dirtyIds = dirtyDocs.map((e) => e['id']).toSet();
+
     for (final cat in categories) {
+      if (cat['id'] == null) continue;
+      if (dirtyIds.contains(cat['id'])) continue;
       batch.insert('categories', {...cat, 'is_synced': 1},
           conflictAlgorithm: ConflictAlgorithm.replace);
     }

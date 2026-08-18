@@ -280,6 +280,7 @@ class _ProductFormWidgetState extends ConsumerState<ProductFormWidget> {
                 child: DropdownButtonFormField<String>(
                   decoration: const InputDecoration(labelText: 'Product Type'),
                   value: _productType,
+                  isExpanded: true,
                   items: const [
                     DropdownMenuItem(value: 'NORMAL', child: Text('Normal Product')),
                     DropdownMenuItem(value: 'FOOD', child: Text('Food Item')),
