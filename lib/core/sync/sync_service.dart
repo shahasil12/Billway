@@ -13,7 +13,7 @@ class SyncService {
   SyncService({required this.dbHelper, required this.apiClient}) {
     // Listen for connectivity changes
     Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
-      if (results.contains(ConnectivityResult.mobile) || results.contains(ConnectivityResult.wifi)) {
+      if (!results.contains(ConnectivityResult.none) || results.length > 1) {
         syncPendingData();
       }
     });
@@ -37,7 +37,7 @@ class SyncService {
     
     // Check connectivity first
     final connectivityResult = await (Connectivity().checkConnectivity());
-    if (!connectivityResult.contains(ConnectivityResult.mobile) && !connectivityResult.contains(ConnectivityResult.wifi)) {
+    if (connectivityResult.contains(ConnectivityResult.none) && connectivityResult.length == 1) {
        return;
     }
 
