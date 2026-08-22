@@ -85,6 +85,20 @@ class SyncService {
       if (action == 'CREATE' || action == 'UPDATE') {
         final db = await dbHelper.database;
         await _resolveForeignKeys(db, entityType, payload);
+        
+        // Handle local image upload for products
+        if (entityType == 'PRODUCT') {
+          final String? imageUrl = payload['image_url'] ?? payload['image'];
+          if (imageUrl != null && !imageUrl.startsWith('http')) {
+            final remoteUrl = await apiClient.uploadImage(imageUrl);
+            if (remoteUrl != null) {
+              payload['image'] = remoteUrl;
+              payload['image_url'] = remoteUrl; // Keep both consistent depending on API expectation
+            } else {
+              return false; // Retry later if image upload fails
+            }
+          }
+        }
       }
 
       if (action == 'CREATE') {

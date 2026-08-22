@@ -70,7 +70,9 @@ class ProductRepositoryImpl implements ProductRepository {
           final remoteModel = await remoteDataSource.createProduct(product, imagePath: imagePath);
           finalImageUrl = remoteModel.image;
           remoteId = remoteModel.id;
-        } catch (_) {}
+        } catch (_) {
+          finalImageUrl = imagePath;
+        }
       }
 
       final model = ProductModel(
@@ -138,7 +140,9 @@ class ProductRepositoryImpl implements ProductRepository {
         try {
           final remoteModel = await remoteDataSource.updateProduct(product, imagePath: imagePath);
           finalImageUrl = remoteModel.image;
-        } catch (_) {}
+        } catch (_) {
+          finalImageUrl = imagePath;
+        }
       }
 
       final model = ProductModel(

@@ -43,4 +43,37 @@ class ApiClient {
       }
     ));
   }
+
+  Future<String?> uploadImage(String imagePath) async {
+    try {
+      final fileName = imagePath.split('/').last;
+      
+      final urlResponse = await dio.post('core/generate-upload-url/', data: {
+        'file_name': fileName,
+        'content_type': 'image/jpeg', 
+      });
+      
+      final uploadUrl = urlResponse.data['upload_url'];
+      final publicUrl = urlResponse.data['public_url'];
+      
+      final file = await MultipartFile.fromFile(imagePath);
+      final rawDio = Dio(); 
+      await rawDio.put(
+        uploadUrl,
+        data: file.finalize(),
+        options: Options(
+          headers: {
+            'Content-Type': 'image/jpeg',
+            'Content-Length': file.length,
+          },
+        ),
+      );
+      
+      final separator = publicUrl.toString().contains('?') ? '&' : '?';
+      return '$publicUrl${separator}t=${DateTime.now().millisecondsSinceEpoch}';
+    } catch (e) {
+      print('Error uploading image: $e');
+      return null;
+    }
+  }
 }

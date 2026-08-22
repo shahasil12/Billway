@@ -6,7 +6,7 @@ import '../../features/settings/domain/entities/settings.dart';
 import 'package:intl/intl.dart';
 
 class PdfInvoiceGenerator {
-  static Future<void> printInvoice(Invoice invoice, Settings settings) async {
+  static Future<pw.Document> _generatePdfDocument(Invoice invoice, Settings settings) async {
     final pdf = pw.Document();
     
     // Premium Color Palette
@@ -43,10 +43,20 @@ class PdfInvoiceGenerator {
       ),
     );
 
+    return pdf;
+  }
+
+  static Future<void> printInvoice(Invoice invoice, Settings settings) async {
+    final pdf = await _generatePdfDocument(invoice, settings);
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
       name: 'Invoice_${invoice.id}.pdf',
     );
+  }
+
+  static Future<List<int>> generatePdfBytes(Invoice invoice, Settings settings) async {
+    final pdf = await _generatePdfDocument(invoice, settings);
+    return await pdf.save();
   }
 
   static pw.Widget _buildHeader(Settings settings, PdfColor primary, PdfColor secondary) {

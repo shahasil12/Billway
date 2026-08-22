@@ -84,23 +84,19 @@ class _InvoiceDetailScreenState extends ConsumerState<InvoiceDetailScreen> {
   Future<void> _downloadAndOpenPdf() async {
     setState(() => _isDownloading = true);
     try {
-      // Refresh to get the latest remote ID if it was just synced
-      await _refreshInvoiceAsync();
+      final settings = ref.read(settingsProvider).settings;
+      if (settings == null) throw Exception('Settings not found');
       
-      final dio = ref.read(apiClientProvider).dio;
-      final response = await dio.get(
-        'invoices/${_invoice.id}/pdf/',
-        options: Options(responseType: ResponseType.bytes),
-      );
+      final bytes = await PdfInvoiceGenerator.generatePdfBytes(_invoice, settings);
       
       final dir = await getApplicationDocumentsDirectory();
       final file = File('${dir.path}/invoice_${_invoice.id}.pdf');
-      await file.writeAsBytes(response.data);
+      await file.writeAsBytes(bytes);
       
       await OpenFile.open(file.path);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to open PDF')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to generate or open PDF')));
       }
     } finally {
       if (mounted) setState(() => _isDownloading = false);

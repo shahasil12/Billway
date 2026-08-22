@@ -32,46 +32,11 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
     return ProductModel.fromJson(response.data);
   }
 
-  Future<String?> _uploadImage(String imagePath) async {
-    try {
-      final fileName = imagePath.split('/').last;
-      
-      // 1. Get presigned URL
-      final urlResponse = await apiClient.dio.post('core/generate-upload-url/', data: {
-        'file_name': fileName,
-        'content_type': 'image/jpeg', // Could be dynamic based on ext
-      });
-      
-      final uploadUrl = urlResponse.data['upload_url'];
-      final publicUrl = urlResponse.data['public_url'];
-      
-      // 2. Upload directly to S3/Supabase
-      final file = await MultipartFile.fromFile(imagePath);
-      final rawDio = Dio(); // Raw dio without base URL or auth interceptors
-      await rawDio.put(
-        uploadUrl,
-        data: file.finalize(),
-        options: Options(
-          headers: {
-            'Content-Type': 'image/jpeg',
-            'Content-Length': file.length,
-          },
-        ),
-      );
-      
-      final separator = publicUrl.toString().contains('?') ? '&' : '?';
-      return '$publicUrl${separator}t=${DateTime.now().millisecondsSinceEpoch}';
-    } catch (e) {
-      print('Error uploading image: $e');
-      return null;
-    }
-  }
-
   @override
   Future<ProductModel> createProduct(Product product, {String? imagePath}) async {
     String? imageUrl;
     if (imagePath != null) {
-      imageUrl = await _uploadImage(imagePath);
+      imageUrl = await apiClient.uploadImage(imagePath);
     }
 
     final model = ProductModel(
@@ -94,7 +59,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   Future<ProductModel> updateProduct(Product product, {String? imagePath}) async {
     String? imageUrl = product.image;
     if (imagePath != null) {
-      imageUrl = await _uploadImage(imagePath);
+      imageUrl = await apiClient.uploadImage(imagePath);
     }
 
     final model = ProductModel(
