@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -251,6 +254,7 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildActionRow(BuildContext context, dynamic user, bool isTablet) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 26),
       child: Flex(
@@ -279,7 +283,7 @@ class DashboardScreen extends ConsumerWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('+ New Bill', style: GoogleFonts.spaceGrotesk(color: Colors.white, fontSize: 19, fontWeight: FontWeight.bold)),
+                        Text(l10n?.newSale ?? '+ New Bill', style: GoogleFonts.spaceGrotesk(color: Colors.white, fontSize: 19, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 3),
                         const Text('Create a new sale', style: TextStyle(color: Color(0xFFC3D3EA), fontSize: 12.5)),
                       ],
@@ -303,11 +307,11 @@ class DashboardScreen extends ConsumerWidget {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildQuickAction(context, 'Add Product', Icons.inventory_2_outlined, AppColors.money050, AppColors.money, () => context.go('/products/add')),
+                  _buildQuickAction(context, l10n?.products ?? 'Add Product', Icons.inventory_2_outlined, AppColors.money050, AppColors.money, () => context.go('/products/add')),
                   const SizedBox(width: 10),
-                  _buildQuickAction(context, 'Add Customer', Icons.person_add_outlined, AppColors.violet050, AppColors.violet, () => context.go('/customers/add')),
+                  _buildQuickAction(context, l10n?.customers ?? 'Add Customer', Icons.person_add_outlined, AppColors.violet050, AppColors.violet, () => context.go('/customers/add')),
                   const SizedBox(width: 10),
-                  _buildQuickAction(context, 'Credits', Icons.account_balance_wallet_outlined, AppColors.amber050, AppColors.amber, () => context.go('/customers/credits')),
+                  _buildQuickAction(context, l10n?.credits ?? 'Credits', Icons.account_balance_wallet_outlined, AppColors.amber050, AppColors.amber, () => context.go('/customers/credits')),
                   const SizedBox(width: 10),
                   _buildQuickAction(context, 'Add Expense', Icons.receipt_long_outlined, AppColors.coral050, AppColors.coral, () {}),
                 ],

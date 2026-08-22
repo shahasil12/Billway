@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:io';
 
 class ApiClient {
   final Dio dio;
@@ -56,15 +57,16 @@ class ApiClient {
       final uploadUrl = urlResponse.data['upload_url'];
       final publicUrl = urlResponse.data['public_url'];
       
-      final file = await MultipartFile.fromFile(imagePath);
+      final file = File(imagePath);
+      final length = await file.length();
       final rawDio = Dio(); 
       await rawDio.put(
         uploadUrl,
-        data: file.finalize(),
+        data: file.openRead(),
         options: Options(
           headers: {
             'Content-Type': 'image/jpeg',
-            'Content-Length': file.length,
+            'Content-Length': length.toString(),
           },
         ),
       );

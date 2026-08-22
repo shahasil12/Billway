@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_colors.dart';
@@ -112,6 +115,7 @@ class AppShell extends ConsumerWidget {
   }
 
   Widget _buildBottomNav(BuildContext context, int currentIndex, bool isCashier) {
+    final l10n = AppLocalizations.of(context);
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
       currentIndex: currentIndex,
@@ -121,16 +125,17 @@ class AppShell extends ConsumerWidget {
       unselectedLabelStyle: AppTextStyles.caption,
       onTap: (index) => _onItemTapped(index, context, isCashier),
       items: [
-        const BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), activeIcon: Icon(Icons.dashboard), label: 'Home'),
-        const BottomNavigationBarItem(icon: Icon(Icons.receipt_long_outlined), activeIcon: Icon(Icons.receipt_long), label: 'Billing'),
+        BottomNavigationBarItem(icon: const Icon(Icons.dashboard_outlined), activeIcon: const Icon(Icons.dashboard), label: l10n?.dashboard ?? 'Home'),
+        BottomNavigationBarItem(icon: const Icon(Icons.receipt_long_outlined), activeIcon: const Icon(Icons.receipt_long), label: l10n?.sales ?? 'Billing'),
         const BottomNavigationBarItem(icon: Icon(Icons.point_of_sale_outlined), activeIcon: Icon(Icons.point_of_sale), label: 'POS'),
-        const BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), activeIcon: Icon(Icons.inventory_2), label: 'Products'),
-        BottomNavigationBarItem(icon: Icon(isCashier ? Icons.people_outline : Icons.menu), activeIcon: Icon(isCashier ? Icons.people : Icons.menu), label: isCashier ? 'Customers' : 'More'),
+        BottomNavigationBarItem(icon: const Icon(Icons.inventory_2_outlined), activeIcon: const Icon(Icons.inventory_2), label: l10n?.products ?? 'Products'),
+        BottomNavigationBarItem(icon: Icon(isCashier ? Icons.people_outline : Icons.menu), activeIcon: Icon(isCashier ? Icons.people : Icons.menu), label: isCashier ? (l10n?.customers ?? 'Customers') : 'More'),
       ],
     );
   }
 
   Widget _buildNavigationRail(BuildContext context, int currentIndex, bool isCashier) {
+    final l10n = AppLocalizations.of(context);
     // Tablet has distinct destinations
     final String location = GoRouterState.of(context).uri.path;
     int railIndex = 0;
@@ -144,17 +149,17 @@ class AppShell extends ConsumerWidget {
     else if (location.startsWith('/settings') && !isCashier) railIndex = 7;
 
     List<NavigationRailDestination> destinations = [
-        const NavigationRailDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: Text('Home')),
-        const NavigationRailDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long), label: Text('Billing')),
+        NavigationRailDestination(icon: const Icon(Icons.dashboard_outlined), selectedIcon: const Icon(Icons.dashboard), label: Text(l10n?.dashboard ?? 'Home')),
+        NavigationRailDestination(icon: const Icon(Icons.receipt_long_outlined), selectedIcon: const Icon(Icons.receipt_long), label: Text(l10n?.sales ?? 'Billing')),
         const NavigationRailDestination(icon: Icon(Icons.point_of_sale_outlined), selectedIcon: Icon(Icons.point_of_sale), label: Text('POS')),
-        const NavigationRailDestination(icon: Icon(Icons.inventory_2_outlined), selectedIcon: Icon(Icons.inventory_2), label: Text('Products')),
-        const NavigationRailDestination(icon: Icon(Icons.people_outline), selectedIcon: Icon(Icons.people), label: Text('Customers')),
+        NavigationRailDestination(icon: const Icon(Icons.inventory_2_outlined), selectedIcon: const Icon(Icons.inventory_2), label: Text(l10n?.products ?? 'Products')),
+        NavigationRailDestination(icon: const Icon(Icons.people_outline), selectedIcon: const Icon(Icons.people), label: Text(l10n?.customers ?? 'Customers')),
         const NavigationRailDestination(icon: Icon(Icons.category_outlined), selectedIcon: Icon(Icons.category), label: Text('Categories')),
     ];
 
     if (!isCashier) {
-        destinations.add(const NavigationRailDestination(icon: Icon(Icons.bar_chart_outlined), selectedIcon: Icon(Icons.bar_chart), label: Text('Reports')));
-        destinations.add(const NavigationRailDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: Text('Settings')));
+        destinations.add(NavigationRailDestination(icon: const Icon(Icons.bar_chart_outlined), selectedIcon: const Icon(Icons.bar_chart), label: Text(l10n?.reports ?? 'Reports')));
+        destinations.add(NavigationRailDestination(icon: const Icon(Icons.settings_outlined), selectedIcon: const Icon(Icons.settings), label: Text(l10n?.settings ?? 'Settings')));
     }
 
     return NavigationRail(
