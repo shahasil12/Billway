@@ -63,8 +63,18 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Either<Failure, Product>> createProduct(Product product, {String? imagePath}) async {
     try {
-      // Local image handling for offline is complex, we just save the textual data for sync
+      int? remoteId = product.id;
+      String? finalImageUrl = product.image;
+      if (imagePath != null) {
+        try {
+          final remoteModel = await remoteDataSource.createProduct(product, imagePath: imagePath);
+          finalImageUrl = remoteModel.image;
+          remoteId = remoteModel.id;
+        } catch (_) {}
+      }
+
       final model = ProductModel(
+        id: remoteId,
         name: product.name,
         categoryId: product.categoryId,
         categoryName: product.categoryName,
@@ -72,13 +82,47 @@ class ProductRepositoryImpl implements ProductRepository {
         taxPercentage: product.taxPercentage,
         barcode: product.barcode,
         description: product.description,
+        image: finalImageUrl,
+        productType: product.productType,
+        trackStock: product.trackStock,
+        minStock: product.minStock,
+        unit: product.unit,
         stock: product.stock,
         status: product.status,
       );
       
       final localProduct = await localDataSource.createProduct(model);
       
-      await syncService.addToQueue('CREATE', 'PRODUCT', localProduct.toJson(), localId: localProduct.id);
+      // If we didn't successfully create it remotely with the image, add to queue
+      if (imagePath == null || finalImageUrl == product.image) {
+        await syncService.addToQueue('CREATE', 'PRODUCT', localProduct.toJson(), localId: localProduct.id);
+      } else {
+        // We already created it remotely, mark it as synced
+        final syncedModel = ProductModel(
+          id: remoteId ?? localProduct.id,
+          name: model.name,
+          categoryId: model.categoryId,
+          categoryName: model.categoryName,
+          price: model.price,
+          taxPercentage: model.taxPercentage,
+          barcode: model.barcode,
+          description: model.description,
+          image: model.image,
+          productType: model.productType,
+          trackStock: model.trackStock,
+          minStock: model.minStock,
+          unit: model.unit,
+          stock: model.stock,
+          status: model.status,
+        );
+        await localDataSource.upsertProducts([syncedModel]);
+        
+        // Ensure local_id maps to remote id if it was just created
+        if (remoteId != null && localProduct.id != remoteId) {
+            final db = await (localDataSource as ProductLocalDataSourceImpl).dbHelper.database;
+            await db.update('products', {'id': remoteId, 'is_synced': 1}, where: 'local_id = ?', whereArgs: [localProduct.id]);
+        }
+      }
       
       return Right(localProduct);
     } catch (e) {
@@ -89,6 +133,14 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Either<Failure, Product>> updateProduct(Product product, {String? imagePath}) async {
     try {
+      String? finalImageUrl = product.image;
+      if (imagePath != null) {
+        try {
+          final remoteModel = await remoteDataSource.updateProduct(product, imagePath: imagePath);
+          finalImageUrl = remoteModel.image;
+        } catch (_) {}
+      }
+
       final model = ProductModel(
         id: product.id,
         name: product.name,
@@ -98,15 +150,47 @@ class ProductRepositoryImpl implements ProductRepository {
         taxPercentage: product.taxPercentage,
         barcode: product.barcode,
         description: product.description,
+        image: finalImageUrl,
+        productType: product.productType,
+        trackStock: product.trackStock,
+        minStock: product.minStock,
+        unit: product.unit,
         stock: product.stock,
         status: product.status,
       );
       
-      final updatedLocal = await localDataSource.updateProduct(model);
-      
-      await syncService.addToQueue('UPDATE', 'PRODUCT', updatedLocal.toJson());
-      
-      return Right(updatedLocal);
+      // If we didn't successfully update it remotely with the image, add to queue
+      if (imagePath == null || finalImageUrl == product.image) {
+        final updatedLocal = await localDataSource.updateProduct(model);
+        await syncService.addToQueue('UPDATE', 'PRODUCT', updatedLocal.toJson());
+        return Right(updatedLocal);
+      } else {
+        // We already updated it remotely! Mark it as synced locally instead of dirty.
+        // But localDataSource.updateProduct marks it dirty.
+        // We can just use upsertProducts, which forces is_synced=1, BUT upsertProducts ignores dirty items.
+        // So we must manually update it or just clear the dirty flag.
+        final db = await (localDataSource as ProductLocalDataSourceImpl).dbHelper.database;
+        final data = {
+          'name': model.name,
+          'category_id': model.categoryId,
+          'category_name': model.categoryName,
+          'price': model.price,
+          'tax_percentage': model.taxPercentage,
+          'barcode': model.barcode,
+          'description': model.description,
+          'image_url': model.image,
+          'stock': model.stock,
+          'status': model.status == true ? 1 : 0,
+          'is_synced': 1,
+        };
+        await db.update(
+          'products', 
+          data, 
+          where: 'id = ? OR local_id = ?', 
+          whereArgs: [model.id, model.id]
+        );
+        return Right(model);
+      }
     } catch (e) {
       return const Left(ServerFailure('Failed to update product'));
     }
