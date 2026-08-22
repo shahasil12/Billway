@@ -94,6 +94,17 @@ class SyncService {
             if (remoteUrl != null) {
               payload['image'] = remoteUrl;
               payload['image_url'] = remoteUrl; // Keep both consistent depending on API expectation
+              
+              // IMPORTANT: Update local database so the app can load the new image
+              final localId = payload['local_id'] ?? payload['id'];
+              if (localId != null) {
+                await db.update(
+                  'products',
+                  {'image': remoteUrl},
+                  where: 'local_id = ? OR id = ?',
+                  whereArgs: [localId, localId],
+                );
+              }
             } else {
               return false; // Retry later if image upload fails
             }

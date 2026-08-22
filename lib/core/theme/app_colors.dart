@@ -1,42 +1,45 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Brand
-  static const Color brand = Color(0xFF153059);
-  static const Color brand700 = Color(0xFF1E4177);
-  static const Color brand050 = Color(0xFFEAF0F9);
+  // Brand (spec: --color-primary: #1E5FB0)
+  static const Color brand = Color(0xFF1E5FB0);
+  static const Color brandDark = Color(0xFF144A8C);
+  static const Color brand050 = Color(0xFFE8F0FB);
 
-  // Backgrounds & Surfaces
-  static const Color bg = Color(0xFFF5F6F9);
+  // Backgrounds & Surfaces (spec: --color-bg: #F7F8FA)
+  static const Color bg = Color(0xFFF7F8FA);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceSunk = Color(0xFFFAFBFC);
+  static const Color surfaceSunk = Color(0xFFF0F2F5);
 
-  // Borders
-  static const Color border = Color(0xFFE6E9EF);
-  static const Color borderStrong = Color(0xFFD7DBE3);
+  // Borders (spec: --color-border: #D7DCE2)
+  static const Color border = Color(0xFFD7DCE2);
+  static const Color borderStrong = Color(0xFFBEC4CE);
 
-  // Text & Ink
-  static const Color ink900 = Color(0xFF12172A);
-  static const Color ink700 = Color(0xFF3A4256);
-  static const Color ink500 = Color(0xFF6B7286);
-  static const Color ink400 = Color(0xFF9AA1B2);
+  // Text (spec: --color-text-primary: #1A1D21, never light gray)
+  static const Color ink900 = Color(0xFF1A1D21);
+  static const Color ink700 = Color(0xFF4B5259); // AA compliant on white
+  static const Color ink500 = Color(0xFF6B7280); // Used sparingly
+  static const Color ink400 = Color(0xFF9CA3AF);
 
-  // Semantics
-  static const Color money = Color(0xFF0E9B6C);
-  static const Color money050 = Color(0xFFE4F7EF);
-  
-  static const Color amber = Color(0xFFB4740F);
-  static const Color amber050 = Color(0xFFFBF1DF);
-  
-  static const Color coral = Color(0xFFD14343);
-  static const Color coral050 = Color(0xFFFCEAEA);
-  
-  static const Color violet = Color(0xFF6C5CE0);
-  static const Color violet050 = Color(0xFFEFECFC);
+  // Semantics (spec: green=money/success, red=danger, orange=warning)
+  static const Color money = Color(0xFF1E8A3C);   // spec: --color-success
+  static const Color money050 = Color(0xFFE4F5EA);
 
-  // Keeping old aliases to prevent breaking other files immediately
+  static const Color amber = Color(0xFFE08A00);   // spec: --color-warning
+  static const Color amber050 = Color(0xFFFFF3DC);
+
+  static const Color coral = Color(0xFFC62828);   // spec: --color-danger
+  static const Color coral050 = Color(0xFFFCE8E8);
+
+  static const Color violet = Color(0xFF5E4FD4);
+  static const Color violet050 = Color(0xFFEEECFA);
+
+  // ---- Stable aliases used throughout the app ----
   static const Color primary = brand;
+  static const Color primaryDark = brandDark;
   static const Color primaryLight = brand050;
+  // Legacy alias kept for backward compat with dashboard
+  static const Color brand700 = brandDark;
   static const Color textPrimary = ink900;
   static const Color textSecondary = ink700;
   static const Color background = bg;
@@ -46,8 +49,6 @@ class AppColors {
   static const Color warningBg = amber050;
   static const Color error = coral;
   static const Color errorBg = coral050;
-  
-  // Re-add missing aliases
   static const Color textOnPrimary = surface;
   static const Color secondary = violet;
   static const Color surfaceAlt = surfaceSunk;

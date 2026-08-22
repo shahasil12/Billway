@@ -10,23 +10,28 @@ class WarmupService {
 
   WarmupService(this._dio, this._baseUrl);
 
-  /// Fire and forget — call this from main.dart initState or app launch.
+  /// Fire and forget — called from main.dart initState.
   void warmup() {
     _ping();
   }
 
   Future<void> _ping() async {
     try {
+      // /api/core/ping/ has AllowAny — no auth needed, no JSON body.
+      // Just hitting it over TCP is enough to wake Render from sleep.
       await _dio.get(
-        '${_baseUrl}health/', // lightweight endpoint; falls back silently
+        '${_baseUrl}core/ping/',
         options: Options(
           sendTimeout: const Duration(seconds: 90),
           receiveTimeout: const Duration(seconds: 90),
+          // Don't follow redirects that might need auth
+          followRedirects: false,
+          validateStatus: (status) => status != null && status < 500,
         ),
       );
     } catch (_) {
-      // Ignore all errors — the server may not have a /health/ endpoint,
-      // but the TCP connection alone wakes it from sleep.
+      // Ignore all errors — if the server is completely down we still
+      // don't want to block the user; they'll see API errors on login.
     }
   }
 }

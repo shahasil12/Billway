@@ -39,7 +39,8 @@ class _BillwayAppState extends ConsumerState<BillwayApp> {
       title: 'Billway POS',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      darkTheme: AppTheme.lightTheme, // Always light — POS screens must be readable on counter
+      themeMode: ThemeMode.light,     // Never follow system dark mode
       routerConfig: router,
     );
   }
