@@ -1,0 +1,21 @@
+{
+  "@@locale": "en",
+  "dashboard": "Dashboard",
+  "sales": "Sales",
+  "products": "Products",
+  "customers": "Customers",
+  "settings": "Settings",
+  "credits": "Credits",
+  "newSale": "New Sale",
+  "todaySales": "Today's Sales",
+  "invoices": "Invoices",
+  "reports": "Reports",
+  "amountPaid": "Amount Paid",
+  "balanceDue": "Balance Due",
+  "status": "Status",
+  "total": "Total",
+  "payCredit": "Pay Credit",
+  "language": "Language",
+  "save": "Save",
+  "cancel": "Cancel"
+}

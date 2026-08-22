@@ -38,7 +38,7 @@ class _POSScreenState extends ConsumerState<POSScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      ref.read(productListProvider.notifier).fetchProducts();
+      ref.read(productListProvider.notifier).resetFilters();
       ref.read(categoryListProvider.notifier).fetchCategories();
       ref.read(customerListProvider.notifier).fetchCustomers();
       _checkSession();
@@ -863,15 +863,18 @@ class _ProductCardState extends State<_ProductCard> {
 
     return Opacity(
       opacity: isOutOfStock ? 0.55 : 1.0,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border, width: 1),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 2))],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: InkWell(
+        onTap: isOutOfStock ? null : _handleAdd,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border, width: 1),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 2))],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Product image / placeholder
             Expanded(
@@ -948,6 +951,7 @@ class _ProductCardState extends State<_ProductCard> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

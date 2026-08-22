@@ -5,6 +5,7 @@ import 'network/api_client.dart';
 import 'network/warmup_service.dart';
 import 'database/database_helper.dart';
 import 'sync/sync_service.dart';
+import 'providers/locale_provider.dart';
 import '../features/auth/data/repositories/user_management_repository.dart';
 import '../features/auth/presentation/controllers/user_management_controller.dart';
 import '../features/customers/data/datasources/customer_local_data_source.dart';

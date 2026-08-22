@@ -4,6 +4,7 @@ class Customer {
   final String? email;
   final String? phone;
   final String? createdAt;
+  final double creditBalance;
 
   Customer({
     this.id,
@@ -11,6 +12,7 @@ class Customer {
     this.email,
     this.phone,
     this.createdAt,
+    this.creditBalance = 0.0,
   });
 
   Customer copyWith({
@@ -19,6 +21,7 @@ class Customer {
     String? email,
     String? phone,
     String? createdAt,
+    double? creditBalance,
   }) {
     return Customer(
       id: id ?? this.id,
@@ -26,6 +29,7 @@ class Customer {
       email: email ?? this.email,
       phone: phone ?? this.phone,
       createdAt: createdAt ?? this.createdAt,
+      creditBalance: creditBalance ?? this.creditBalance,
     );
   }
 }

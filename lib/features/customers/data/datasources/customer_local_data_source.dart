@@ -40,6 +40,7 @@ class CustomerLocalDataSourceImpl implements CustomerLocalDataSource {
         email: map['email'] as String?,
         phone: map['phone'] as String?,
         createdAt: map['created_at'] as String?,
+        creditBalance: (map['credit_balance'] as num?)?.toDouble() ?? 0.0,
       );
     }).toList();
   }
@@ -61,6 +62,7 @@ class CustomerLocalDataSourceImpl implements CustomerLocalDataSource {
         email: map['email'] as String?,
         phone: map['phone'] as String?,
         createdAt: map['created_at'] as String?,
+        creditBalance: (map['credit_balance'] as num?)?.toDouble() ?? 0.0,
       );
     }
     return null;
@@ -76,6 +78,7 @@ class CustomerLocalDataSourceImpl implements CustomerLocalDataSource {
       'email': customer.email,
       'phone': customer.phone,
       'created_at': customer.createdAt ?? DateTime.now().toIso8601String(),
+      'credit_balance': customer.creditBalance,
       'is_synced': customer.id != null ? 1 : 0, 
     };
 
@@ -88,6 +91,7 @@ class CustomerLocalDataSourceImpl implements CustomerLocalDataSource {
       email: customer.email,
       phone: customer.phone,
       createdAt: data['created_at'] as String?,
+      creditBalance: data['credit_balance'] as double,
     );
   }
 
@@ -153,6 +157,7 @@ class CustomerLocalDataSourceImpl implements CustomerLocalDataSource {
           'email': customer.email,
           'phone': customer.phone,
           'created_at': customer.createdAt,
+          'credit_balance': customer.creditBalance,
           'is_synced': 1,
         },
         conflictAlgorithm: ConflictAlgorithm.replace,

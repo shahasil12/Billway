@@ -94,6 +94,15 @@ class ProductListController extends StateNotifier<ProductListState> {
     fetchProducts(isRefresh: true);
   }
 
+  void resetFilters() {
+    if (state.searchQuery.isEmpty && state.categoryId == null) {
+      if (state.products.isEmpty && !state.isLoading) fetchProducts();
+      return;
+    }
+    state = state.copyWith(searchQuery: '', clearCategory: true);
+    fetchProducts(isRefresh: true);
+  }
+
   Future<bool> deleteProduct(int id) async {
     final repository = ref.read(productRepositoryProvider);
     final result = await repository.deleteProduct(id);

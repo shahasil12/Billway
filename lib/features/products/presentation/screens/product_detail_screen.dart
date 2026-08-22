@@ -4,6 +4,7 @@ import '../../../settings/presentation/controllers/settings_controller.dart';
 import '../../domain/entities/product.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:io';
 import 'package:go_router/go_router.dart';
 import '../../../../features/auth/domain/entities/user.dart';
 import '../controllers/product_list_controller.dart';
@@ -60,17 +61,28 @@ class ProductDetailScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (product.image != null)
-              Image.network(
-                product.image!,
-                height: 250,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  height: 250,
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
-                ),
-              )
+            if (product.image != null && product.image!.isNotEmpty)
+              product.image!.startsWith('http')
+                  ? Image.network(
+                      product.image!,
+                      height: 250,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 250,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                      ),
+                    )
+                  : Image.file(
+                      File(product.image!),
+                      height: 250,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 250,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                      ),
+                    )
             else
               Container(
                 height: 250,

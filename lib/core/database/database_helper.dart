@@ -20,17 +20,18 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    const textType = 'TEXT';
+    const intType = 'INTEGER';
+    const realType = 'REAL';
+      
     if (oldVersion < 2) {
-      const textType = 'TEXT';
-      const intType = 'INTEGER';
-      const realType = 'REAL';
       await db.execute('''
 CREATE TABLE IF NOT EXISTS settings (
   id $intType PRIMARY KEY,
@@ -45,6 +46,9 @@ CREATE TABLE IF NOT EXISTS settings (
   updated_at $textType
 )
 ''');
+    }
+    if (oldVersion < 3) {
+      await db.execute('ALTER TABLE customers ADD COLUMN credit_balance $realType DEFAULT 0.0');
     }
   }
 
@@ -64,6 +68,7 @@ CREATE TABLE customers (
   email $textType,
   phone $textType,
   created_at $textType,
+  credit_balance $realType DEFAULT 0.0,
   is_synced $intType DEFAULT 1
 )
 ''');

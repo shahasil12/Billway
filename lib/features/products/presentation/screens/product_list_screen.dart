@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
+import 'dart:io';
 
 import '../../../../core/providers.dart';
 import '../../../auth/domain/entities/user.dart';
@@ -254,15 +255,20 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                if (product.image != null)
+                if (product.image != null && product.image!.isNotEmpty)
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.p12)),
-                    child: Image.network(
-                      // Cache-bust is now handled in the data source
-                      product.image!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildPlaceholder(),
-                    ),
+                    child: product.image!.startsWith('http')
+                        ? Image.network(
+                            product.image!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                          )
+                        : Image.file(
+                            File(product.image!),
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                          ),
                   )
                 else
                   _buildPlaceholder(),

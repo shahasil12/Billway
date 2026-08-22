@@ -11,6 +11,7 @@ import 'widgets/app_shell.dart';
 import '../features/customers/presentation/screens/customer_list_screen.dart';
 import '../features/customers/presentation/screens/add_edit_customer_screen.dart';
 import '../features/customers/presentation/screens/customer_detail_screen.dart';
+import '../features/customers/presentation/screens/credits_screen.dart';
 import '../features/customers/domain/entities/customer.dart';
 
 import '../features/categories/presentation/screens/category_list_screen.dart';
@@ -98,6 +99,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/customers',
             pageBuilder: (context, state) => _fadeTransition(const CustomerListScreen(), state),
+          ),
+          GoRoute(
+            path: '/customers/credits',
+            pageBuilder: (context, state) => _fadeTransition(const CreditsScreen(), state),
           ),
           GoRoute(
             path: '/customers/add',

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../controllers/settings_controller.dart';
 import '../../domain/entities/settings.dart';
 import '../../../../core/providers.dart';
+import '../../../../core/providers/locale_provider.dart';
 import '../../../auth/domain/entities/user.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -138,24 +139,56 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           const SizedBox(height: AppSpacing.p16),
                           AppCard(
                             padding: EdgeInsets.zero,
-                            child: ListTile(
-                              leading: Container(
-                                padding: const EdgeInsets.all(AppSpacing.p8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
+                            child: Column(
+                              children: [
+                                ListTile(
+                                  leading: Container(
+                                    padding: const EdgeInsets.all(AppSpacing.p8),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(Icons.people, color: AppColors.primary),
+                                  ),
+                                  title: Text('Manage Users & Roles', style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
+                                  subtitle: Text('Add cashiers, managers, and admins', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                                  trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                                  onTap: () => context.push('/settings/users'),
                                 ),
-                                child: const Icon(Icons.people, color: AppColors.primary),
-                              ),
-                              title: Text('Manage Users & Roles', style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
-                              subtitle: Text('Add cashiers, managers, and admins', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
-                              trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                              onTap: () => context.push('/settings/users'),
+                              ],
                             ),
                           ),
                           const SizedBox(height: AppSpacing.p32),
                         ],
-                        
+
+                        Text('Personalization', style: AppTextStyles.h3),
+                        const SizedBox(height: AppSpacing.p16),
+                        AppCard(
+                          padding: EdgeInsets.zero,
+                          child: Column(
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.language, color: AppColors.primary),
+                                title: const Text('Language'),
+                                trailing: DropdownButton<String>(
+                                  value: ref.watch(localeProvider).languageCode,
+                                  underline: const SizedBox(),
+                                  items: const [
+                                    DropdownMenuItem(value: 'en', child: Text('English')),
+                                    DropdownMenuItem(value: 'ml', child: Text('മലയാളം')),
+                                  ],
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      ref.read(localeProvider.notifier).setLocale(Locale(val));
+                                    }
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.p32),
+
                         if (user?.role == UserRole.admin || user?.role == UserRole.manager) ...[
                           Text('Management', style: AppTextStyles.h3),
                           const SizedBox(height: AppSpacing.p16),

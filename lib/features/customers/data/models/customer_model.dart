@@ -7,6 +7,7 @@ class CustomerModel extends Customer {
     super.email,
     super.phone,
     super.createdAt,
+    super.creditBalance,
   });
 
   factory CustomerModel.fromJson(Map<String, dynamic> json) {
@@ -16,6 +17,7 @@ class CustomerModel extends Customer {
       email: json['email'],
       phone: json['phone'],
       createdAt: json['created_at'],
+      creditBalance: double.tryParse((json['credit_balance'] ?? '0').toString()) ?? 0.0,
     );
   }
 

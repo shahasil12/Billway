@@ -1,0 +1,21 @@
+{
+  "@@locale": "ml",
+  "dashboard": "ഡാഷ്ബോർഡ്",
+  "sales": "വിൽപ്പന",
+  "products": "ഉൽപ്പന്നങ്ങൾ",
+  "customers": "ഉപഭോക്താക്കൾ",
+  "settings": "ക്രമീകരണങ്ങൾ",
+  "credits": "ക്രെഡിറ്റുകൾ",
+  "newSale": "പുതിയ വിൽപ്പന",
+  "todaySales": "ഇന്നത്തെ വിൽപ്പന",
+  "invoices": "ഇൻവോയ്‌സുകൾ",
+  "reports": "Reports",
+  "amountPaid": "അടച്ച തുക",
+  "balanceDue": "ബാക്കി തുക",
+  "status": "സ്ഥിതി",
+  "total": "ആകെ",
+  "payCredit": "ക്രെഡിറ്റ് അടയ്ക്കുക",
+  "language": "ഭാഷ",
+  "save": "സേവ് ചെയ്യുക",
+  "cancel": "റദ്ദാക്കുക"
+}

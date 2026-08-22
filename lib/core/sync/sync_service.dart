@@ -158,6 +158,17 @@ class SyncService {
         final id = payload['id']; // This should be the remote ID
         if (id == null) return false;
         await apiClient.dio.post('pos/sessions/$id/close/', data: payload);
+      } else if (action == 'PAY_CREDIT') {
+        int? id = payload['customer_id'];
+        if (id == null) return false;
+        
+        final db = await dbHelper.database;
+        final maps = await db.query('customers', columns: ['id'], where: 'local_id = ? OR id = ?', whereArgs: [id, id]);
+        if (maps.isNotEmpty && maps.first['id'] != null) {
+            id = maps.first['id'] as int;
+        }
+
+        await apiClient.dio.post('customers/$id/pay_credit/', data: payload);
       }
       return true;
     } on DioException catch (e) {
