@@ -258,8 +258,8 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.p12)),
                     child: Image.network(
-                      // Cache-bust with product ID to force reload after edits
-                      '${product.image!}?v=${product.id}',
+                      // Cache-bust is now handled in the data source
+                      product.image!,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => _buildPlaceholder(),
                     ),

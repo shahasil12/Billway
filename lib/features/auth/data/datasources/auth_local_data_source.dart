@@ -9,6 +9,8 @@ abstract class AuthLocalDataSource {
   Future<String?> getRefreshToken();
   Future<void> cacheUser(User user);
   Future<User?> getCachedUser();
+  Future<void> setRememberMe(bool value);
+  Future<bool> getRememberMe();
 }
 
 class AuthLocalDataSourceImpl implements AuthLocalDataSource {
@@ -74,5 +76,16 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
     } catch (_) {
       return null;
     }
+  }
+
+  @override
+  Future<void> setRememberMe(bool value) async {
+    await storage.write(key: 'remember_me', value: value.toString());
+  }
+
+  @override
+  Future<bool> getRememberMe() async {
+    final value = await storage.read(key: 'remember_me');
+    return value == 'true';
   }
 }

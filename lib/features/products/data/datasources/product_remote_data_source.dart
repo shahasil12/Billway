@@ -59,7 +59,8 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
         ),
       );
       
-      return publicUrl;
+      final separator = publicUrl.toString().contains('?') ? '&' : '?';
+      return '$publicUrl${separator}t=${DateTime.now().millisecondsSinceEpoch}';
     } catch (e) {
       print('Error uploading image: $e');
       return null;

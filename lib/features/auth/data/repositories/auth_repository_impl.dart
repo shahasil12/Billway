@@ -98,6 +98,12 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<bool> autoLogin() async {
+    final rememberMe = await localDataSource.getRememberMe();
+    if (!rememberMe) {
+      await localDataSource.clearTokens();
+      return false;
+    }
+
     final token = await localDataSource.getAccessToken();
     if (token == null) return false;
 

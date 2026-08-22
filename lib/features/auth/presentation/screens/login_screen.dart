@@ -16,6 +16,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _serverReady = false;
+  bool _rememberMe = true;
 
   @override
   void initState() {
@@ -39,6 +40,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _login() async {
     if (_formKey.currentState!.validate()) {
+      await ref.read(authLocalDataSourceProvider).setRememberMe(_rememberMe);
       final success = await ref.read(authStateProvider.notifier).login(
         _usernameController.text.trim(),
         _passwordController.text,
@@ -143,7 +145,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 8),
+                CheckboxListTile(
+                  title: const Text('Remember Me'),
+                  value: _rememberMe,
+                  onChanged: (value) {
+                    setState(() {
+                      _rememberMe = value ?? true;
+                    });
+                  },
+                  controlAffinity: ListTileControlAffinity.leading,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: authState.isLoading ? null : _login,
                   style: ElevatedButton.styleFrom(
